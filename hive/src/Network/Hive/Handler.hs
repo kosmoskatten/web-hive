@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 -- | Handler is a module implementing a monad and an API to help write
 -- HTTP handler functions.
 module Network.Hive.Handler
@@ -7,6 +8,8 @@ module Network.Hive.Handler
     , HandlerResponse (..)
     , runHandler
     , capture
+    , respond
+    , respondText
     , liftIO
     ) where
 
@@ -19,8 +22,10 @@ import Control.Monad.Reader ( ReaderT
                             )
 import Data.Maybe (fromJust)
 import Data.Text (Text)
+import Data.Text.Encoding (encodeUtf8Builder)
 import Network.Hive.Types (CaptureMap)
-import Network.Wai (Response, Request)
+import Network.HTTP.Types
+import Network.Wai (Response, Request, responseBuilder)
 import System.Log.FastLogger (LoggerSet)
 
 import qualified Data.Map.Lazy as Map
@@ -49,3 +54,16 @@ runHandler action = runReaderT (extrReader action)
 -- present.
 capture :: Text -> Handler Text
 capture text = fromJust . Map.lookup text . captureMap <$> ask
+
+-- | Generic respond function. Encapsulate a Wai Response.
+respond :: Response -> Handler HandlerResponse
+respond = return . HandlerResponse
+
+-- | Respond UTF-8 encoded text. The response is status 200/OK and marked
+-- as content type "text/plain".
+respondText :: Text -> Handler HandlerResponse
+respondText text = do
+    let headers  = [(hContentType, "text/plain")]
+        response = responseBuilder status200 headers $ 
+                                   encodeUtf8Builder text
+    respond response

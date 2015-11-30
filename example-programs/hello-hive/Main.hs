@@ -5,6 +5,7 @@ module Main
 
 import Network.Hive ( Accept (..)
                     , Handler
+                    , HandlerResponse
                     , (</>), (</:>)
                     , accepts
                     , defaultRoute
@@ -13,6 +14,7 @@ import Network.Hive ( Accept (..)
                     , hive
                     , defaultHiveConfig
                     , capture
+                    , respondText
                     , liftIO
                     )
 import Text.Printf (printf)
@@ -22,10 +24,10 @@ main = hive defaultHiveConfig $ do
     get </> "hello" </:> "hive" `accepts` Anything `handledBy` helloHandler
     defaultRoute `handledBy` defaultHandler
 
-helloHandler :: Handler ()
+helloHandler :: Handler HandlerResponse
 helloHandler = do
     name <- capture "hive"
-    liftIO $ putStrLn $ printf "Hello %s!" (show name)
+    respondText $ "Hello " `mappend` name `mappend` "!"
 
-defaultHandler :: Handler ()
-defaultHandler = liftIO $ putStrLn "defaultHandler"
+defaultHandler :: Handler HandlerResponse
+defaultHandler = respondText "You hit the defaultHandler"

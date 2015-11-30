@@ -16,7 +16,10 @@ module Network.Hive
 
     -- Re-export of stuff from Handler.
     , Handler
+    , HandlerResponse
     , capture
+    , respond
+    , respondText
     , liftIO
     ) where
 
@@ -35,9 +38,12 @@ import Network.Hive.EndPoint ( Hive
                              , runHive
                              )
 import Network.Hive.Handler ( Handler
+                            , HandlerResponse (..)
                             , Context (..)
                             , runHandler
                             , capture
+                            , respond
+                            , respondText
                             , liftIO
                             )
 import Network.Hive.Matcher (HttpMatch (..), matchHttp)
@@ -88,8 +94,8 @@ httpService loggerSet endPoints request respReceived =
                             , request    = request
                             , loggerSet  = loggerSet
                             }
-            runHandler handler context
-            respReceived $ responseLBS status200 [] "Hepp"
+            HandlerResponse response <- runHandler handler context
+            respReceived response
         Nothing    -> do
             logStrLn loggerSet $ printf "Can't find a handler"
             respReceived $ responseLBS status500 [] "Oy wey!"

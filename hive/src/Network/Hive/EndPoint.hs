@@ -48,7 +48,7 @@ import Control.Monad.Writer.Strict ( WriterT
                                    )
 import Data.List (foldl')
 import Data.Text (Text)
-import Network.Hive.Handler (Handler)
+import Network.Hive.Handler (Handler, HandlerResponse)
 import Network.Hive.Server (Server)
 import Network.HTTP.Types ( Method
                           , methodGet
@@ -74,7 +74,7 @@ data HttpEndPoint
         { httpMethod  :: !Method
         , httpPath    :: ![Path]
         , httpAccept  :: !Accept
-        , httpHandler :: Handler ()
+        , httpHandler :: Handler HandlerResponse
         }
 
 data WsEndPoint
@@ -99,7 +99,7 @@ data Path
     deriving (Eq, Show)
 
 -- | A Http route. Carries both a method and a path.
-data HttpRoute =
+data HttpRoute = 
     HttpRoute
       { method :: !Method
       , path   :: ![Path]
@@ -196,7 +196,7 @@ accepts :: HttpRoute -> Accept -> GuardedHttpRoute
 accepts = (,)
 
 -- | Insert a GuardedHttpRoute with its Handler into the Hive.
-handledBy :: GuardedHttpRoute -> Handler () -> Hive ()
+handledBy :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
 handledBy (route, accept) handler = 
     tell 
       [ Http $ HttpEndPoint
