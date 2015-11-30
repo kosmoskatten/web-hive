@@ -12,8 +12,10 @@ import Network.Hive ( Accept (..)
                     , handledBy
                     , hive
                     , defaultHiveConfig
+                    , capture
                     , liftIO
                     )
+import Text.Printf (printf)
 
 main :: IO ()
 main = hive defaultHiveConfig $ do
@@ -21,7 +23,9 @@ main = hive defaultHiveConfig $ do
     defaultRoute `handledBy` defaultHandler
 
 helloHandler :: Handler ()
-helloHandler = liftIO $ putStrLn "helloHandler"
+helloHandler = do
+    name <- capture "hive"
+    liftIO $ putStrLn $ printf "Hello %s!" (show name)
 
 defaultHandler :: Handler ()
 defaultHandler = liftIO $ putStrLn "defaultHandler"

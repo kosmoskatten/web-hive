@@ -16,6 +16,7 @@ module Network.Hive
 
     -- Re-export of stuff from Handler.
     , Handler
+    , capture
     , liftIO
     ) where
 
@@ -33,7 +34,12 @@ import Network.Hive.EndPoint ( Hive
                              , handledBy
                              , runHive
                              )
-import Network.Hive.Handler (Handler, runHandler, liftIO)
+import Network.Hive.Handler ( Handler
+                            , Context (..)
+                            , runHandler
+                            , capture
+                            , liftIO
+                            )
 import Network.Hive.Matcher (HttpMatch (..), matchHttp)
 import Network.HTTP.Types
 import Network.Wai
@@ -77,7 +83,12 @@ httpService loggerSet endPoints request respReceived =
     case msum $ map (matchHttp request) endPoints of
         Just match -> do
             let handler = httpHandler $ endPointHttp match
-            runHandler handler
+                context = Context
+                            { captureMap = captureHttp match
+                            , request    = request
+                            , loggerSet  = loggerSet
+                            }
+            runHandler handler context
             respReceived $ responseLBS status200 [] "Hepp"
         Nothing    -> do
             logStrLn loggerSet $ printf "Can't find a handler"
