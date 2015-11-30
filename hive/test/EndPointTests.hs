@@ -12,7 +12,7 @@ module EndPointTests
     , complexPathTest
     , guardedHttpRouteTest
     , rightNumberOfEndPointsTest
-    , filterEndPointsTest
+    , separateEndPointsTest
     ) where
 
 import Network.Hive.EndPoint ( Accept (..) 
@@ -21,8 +21,7 @@ import Network.Hive.EndPoint ( Accept (..)
                              , WsRoute (..)
                              , Path (..)
                              , runHive
-                             , httpEndPoints
-                             , wsEndPoints
+                             , separateEndPoints
                              , accepts
                              , handledBy
                              , servedBy
@@ -120,12 +119,13 @@ guardedHttpRouteTest =
 rightNumberOfEndPointsTest :: Assertion
 rightNumberOfEndPointsTest = 5 @=? (length $ runHive sampleHive)
 
--- | Filter the EndPoints.
-filterEndPointsTest :: Assertion
-filterEndPointsTest = do
+-- | Separate the EndPoints.
+separateEndPointsTest :: Assertion
+separateEndPointsTest = do
     let endPoints = runHive sampleHive
-    3 @=? (length $ httpEndPoints endPoints)
-    2 @=? (length $ wsEndPoints endPoints)
+        (hs, ws)  = separateEndPoints endPoints
+    3 @=? length hs
+    2 @=? length ws
 
 -- | An example hive for testing.
 sampleHive :: Hive ()

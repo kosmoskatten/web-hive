@@ -25,7 +25,7 @@ testSuite =
         , testCase "Test complex path" complexPathTest
         , testCase "Test guarded route" guardedHttpRouteTest
         , testCase "Test # end points" rightNumberOfEndPointsTest
-        , testCase "Test filtering end points" filterEndPointsTest
+        , testCase "Test separating end points" separateEndPointsTest
         ]
     , testGroup "Matcher Tests"
         [ testCase "Test match empty path" matchEmptyPathTest

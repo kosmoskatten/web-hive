@@ -10,10 +10,10 @@ module Network.Hive.EndPoint
     , HttpRoute (..)
     , WsRoute (..)
     , GuardedHttpRoute
+    , EndPointPairs
     , Hive
     , runHive
-    , httpEndPoints
-    , wsEndPoints
+    , separateEndPoints
 
     -- Create HttpRoutes.
     , get
@@ -46,6 +46,7 @@ import Control.Monad.Writer.Strict ( WriterT
                                    , execWriterT
                                    , tell
                                    )
+import Data.List (foldl')
 import Data.Text (Text)
 import Network.Hive.Handler (Handler)
 import Network.Hive.Server (Server)
@@ -112,6 +113,9 @@ newtype WsRoute = WsRoute [Path]
 -- | A guarded Http route.
 type GuardedHttpRoute = (HttpRoute, Accept)
 
+-- | A separation of the different kind of EndPoints
+type EndPointPairs = ([HttpEndPoint], [WsEndPoint])
+
 -- | Type class to provide a generalized interface towards both Http and
 -- Web Socket routes.
 class Route a where
@@ -130,13 +134,14 @@ instance Route WsRoute where
 runHive :: Hive () -> [EndPoint]
 runHive action = runIdentity $ execWriterT (extrWriter action)
 
--- | Filter out the Http EndPoints from a list of EndPoints.
-httpEndPoints :: [EndPoint] -> [EndPoint]
-httpEndPoints = filter isHttpEndPoint
-
--- | Filter out the Web Socket EndPoints from a list of EndPoints.
-wsEndPoints :: [EndPoint] -> [EndPoint]
-wsEndPoints = filter isWsEndPoint
+-- | Separate the list of generic enpoints into a pair of list with the
+-- specialized type.
+separateEndPoints :: [EndPoint] -> EndPointPairs
+separateEndPoints = foldl' separate ([], [])
+    where
+      separate :: EndPointPairs -> EndPoint -> EndPointPairs
+      separate (hs, ws) (Http ep)      = (hs ++ [ep], ws)
+      separate (hs, ws) (WebSocket ep) = (hs, ws ++ [ep])
 
 -- | Make an empty route for "GET".
 get :: HttpRoute
@@ -216,9 +221,3 @@ servedBy (WsRoute p) server =
 methodDefault :: Method
 methodDefault = "DEFAULT"
 
-isHttpEndPoint :: EndPoint -> Bool
-isHttpEndPoint (Http _) = True
-isHttpEndPoint _        = False
-
-isWsEndPoint :: EndPoint -> Bool
-isWsEndPoint = not . isHttpEndPoint

@@ -7,8 +7,7 @@ module Network.Hive.Matcher
     ) where
 
 import Data.Text (Text)
-import Network.Hive.EndPoint ( EndPoint (..)
-                             , HttpEndPoint (..)
+import Network.Hive.EndPoint ( HttpEndPoint (..)
                              , Path (..)
                              , methodDefault
                              )
@@ -26,12 +25,8 @@ data HttpMatch
         }
 
 -- | Match a request with an EndPoint.
-matchHttp :: Request -> EndPoint -> Maybe HttpMatch
-matchHttp request (Http httpEndPoint) = matchHttp' request httpEndPoint
-matchHttp _ _                         = Nothing
-
-matchHttp' :: Request -> HttpEndPoint -> Maybe HttpMatch
-matchHttp' request endPoint
+matchHttp :: Request -> HttpEndPoint -> Maybe HttpMatch
+matchHttp request endPoint
     -- If the EndPoint's method is "DEFAULT" there's always a match.
     | httpMethod endPoint == methodDefault =
         Just $ HttpMatch
