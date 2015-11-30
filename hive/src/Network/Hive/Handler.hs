@@ -6,9 +6,15 @@ module Network.Hive.Handler
     ( Handler
     , HandlerResponse (..)
     , runHandler
+    , liftIO
     ) where
 
-import Control.Monad.Reader (ReaderT, MonadReader, MonadIO, runReaderT)
+import Control.Monad.Reader ( ReaderT
+                            , MonadReader
+                            , MonadIO
+                            , runReaderT
+                            , liftIO
+                            )
 
 -- | Response type for a handler. Just a thin wrapper on top of Wai's
 -- Response type.
