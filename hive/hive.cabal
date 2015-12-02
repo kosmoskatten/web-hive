@@ -46,11 +46,15 @@ library
 test-suite hive-tests
   type:               exitcode-stdio-1.0
   main-is:            Main.hs
-  other-modules:      EndPointTests
+  other-modules:      HiveTests
+                      EndPointTests
                       MatcherTests
   build-depends:      base >= 4.8 && <4.9
+                    , async
+                    , bytestring
                     , containers
                     , hive
+                    , http-client
                     , http-types
                     , HUnit
                     , test-framework

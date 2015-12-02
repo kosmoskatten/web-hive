@@ -5,6 +5,7 @@ module Main
 import Test.Framework (Test, defaultMain, testGroup)
 import Test.Framework.Providers.HUnit (testCase)
 
+import HiveTests
 import EndPointTests
 import MatcherTests
 
@@ -13,7 +14,10 @@ main = defaultMain testSuite
 
 testSuite :: [Test]
 testSuite =
-    [ testGroup "EndPoint Tests"
+    [ testGroup "Hive Test"
+        [ testCase "Test 500 if no endpoints" shallResp500NoEndPointTest
+        ]    
+    , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest
         , testCase "Test post" postTest
         , testCase "Test put" putTest
