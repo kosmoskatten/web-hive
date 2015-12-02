@@ -16,6 +16,7 @@ testSuite :: [Test]
 testSuite =
     [ testGroup "Hive Test"
         [ testCase "Test 500 if no endpoints" shallResp500NoEndPointTest
+        , testCase "Test target routing" shallRouteTargetTest
         ]    
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest
