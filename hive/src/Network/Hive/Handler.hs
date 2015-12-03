@@ -10,6 +10,8 @@ module Network.Hive.Handler
     , capture
     , respond
     , respondText
+    , queryValue
+    , queryValues
     , liftIO
     ) where
 
@@ -25,10 +27,11 @@ import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
 import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types
-import Network.Wai (Response, Request, responseBuilder)
+import Network.Wai (Response, Request (..), responseBuilder)
 import System.Log.FastLogger (LoggerSet)
 
 import qualified Data.Map.Lazy as Map
+import qualified Network.Hive.QueryLookup as QL
 
 -- | Response type for a handler. Just a thin wrapper on top of Wai's
 -- Response type.
@@ -67,3 +70,11 @@ respondText text = do
         response = responseBuilder status200 headers $ 
                                    encodeUtf8Builder text
     respond response
+
+-- | Fetch the first - if any - query value for the given key.
+queryValue :: Text -> Handler (Maybe Text)
+queryValue key = QL.queryValue key . queryString . request <$> ask
+
+-- | Fetch all - if any - qery values for the given key.
+queryValues :: Text -> Handler [Text]
+queryValues key = QL.queryValues key . queryString . request <$> ask

@@ -20,6 +20,8 @@ module Network.Hive
     , capture
     , respond
     , respondText
+    , queryValue
+    , queryValues
     , liftIO
     ) where
 
@@ -44,6 +46,8 @@ import Network.Hive.Handler ( Handler
                             , capture
                             , respond
                             , respondText
+                            , queryValue
+                            , queryValues
                             , liftIO
                             )
 import Network.Hive.Logger ( LoggerStream (..)
