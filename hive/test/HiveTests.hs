@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module HiveTests
-    ( shallResp500NoEndPointTest
+    ( shallResp500Test
     , shallRouteTargetTest
+    , shallCaptureTest
     ) where
 
 import Data.ByteString.Lazy (ByteString)
@@ -29,8 +30,8 @@ import qualified Network.HTTP.Client as C
 
 -- | Access to a non-existing route shall result in a 500/Internal
 -- Server Error.
-shallResp500NoEndPointTest :: Assertion
-shallResp500NoEndPointTest = do
+shallResp500Test :: Assertion
+shallResp500Test = do
     let thePort = basePort
     withHive thePort theHive $ do
         (sc, _) <- httpGet thePort "/"
@@ -66,7 +67,32 @@ shallRouteTargetTest = do
               `handledBy` respondText "Deep Purple"
           get `accepts` Anything `handledBy` respondText "I'm root!"
           defaultRoute `handledBy` respondText "default"
-                                     
+                  
+shallCaptureTest :: Assertion
+shallCaptureTest = do
+    let thePort = basePort + 2
+    withHive thePort theHive $ do
+        resp1 <- httpGet thePort "/anything"
+        resp2 <- httpGet thePort "/give/tarzan/a/banana"
+        (200, "You said anything")    @=? resp1
+        (200, "tarzan want a banana") @=? resp2
+    where
+      theHive :: Hive ()
+      theHive = do
+          get </:> "word" 
+              `accepts` Anything
+              `handledBy` do
+                  word <- capture "word"
+                  respondText $ "You said " `mappend` word
+
+          get </> "give" </:> "name" </> "a" </:> "fruit"
+              `accepts` Anything
+              `handledBy` do
+                  name  <- capture "name"
+                  fruit <- capture "fruit"
+                  respondText $ name `mappend` " want a " `mappend` fruit
+
+
 httpGet :: Int -> String -> IO (Int, ByteString)
 httpGet p url = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url

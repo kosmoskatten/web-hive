@@ -15,8 +15,9 @@ main = defaultMain testSuite
 testSuite :: [Test]
 testSuite =
     [ testGroup "Hive Test"
-        [ testCase "Test 500 if no endpoints" shallResp500NoEndPointTest
+        [ testCase "Test 500 if no endpoints" shallResp500Test
         , testCase "Test target routing" shallRouteTargetTest
+        , testCase "Test capturing" shallCaptureTest
         ]    
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest
