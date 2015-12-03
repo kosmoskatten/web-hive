@@ -18,6 +18,7 @@ testSuite =
         [ testCase "Test 500 if no endpoints" shallResp500Test
         , testCase "Test target routing" shallRouteTargetTest
         , testCase "Test capturing" shallCaptureTest
+        , testCase "Test content type text" shallBeContentTypeTextTest
         ]    
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest

@@ -3,6 +3,7 @@ module HiveTests
     ( shallResp500Test
     , shallRouteTargetTest
     , shallCaptureTest
+    , shallBeContentTypeTextTest
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -48,16 +49,16 @@ shallRouteTargetTest :: Assertion
 shallRouteTargetTest = do
     let thePort = basePort + 1
     withHive thePort theHive $ do
-        (stat1, body1) <- httpGet thePort "/hello/world"
-        (stat2, body2) <- httpGet thePort "/deep/purple"
-        (stat3, body3) <- httpGet thePort "/just/random"
-        (stat4, body4) <- httpGet thePort "/"
-        (stat5, body5) <- httpGet thePort ""
-        (200, "Hello, world!") @=? (stat1, C.responseBody body1)
-        (200, "Deep Purple")   @=? (stat2, C.responseBody body2)
-        (200, "default")       @=? (stat3, C.responseBody body3)
-        (200, "I'm root!")     @=? (stat4, C.responseBody body4)
-        (200, "I'm root!")     @=? (stat5, C.responseBody body5)
+        (stat1, resp1) <- httpGet thePort "/hello/world"
+        (stat2, resp2) <- httpGet thePort "/deep/purple"
+        (stat3, resp3) <- httpGet thePort "/just/random"
+        (stat4, resp4) <- httpGet thePort "/"
+        (stat5, resp5) <- httpGet thePort ""
+        (200, "Hello, world!") @=? (stat1, C.responseBody resp1)
+        (200, "Deep Purple")   @=? (stat2, C.responseBody resp2)
+        (200, "default")       @=? (stat3, C.responseBody resp3)
+        (200, "I'm root!")     @=? (stat4, C.responseBody resp4)
+        (200, "I'm root!")     @=? (stat5, C.responseBody resp5)
     where
       theHive :: Hive ()
       theHive = do
@@ -69,15 +70,16 @@ shallRouteTargetTest = do
               `handledBy` respondText "Deep Purple"
           get `accepts` Anything `handledBy` respondText "I'm root!"
           defaultRoute `handledBy` respondText "default"
-                  
+
+-- | Access to captures shall match and be captured.
 shallCaptureTest :: Assertion
 shallCaptureTest = do
     let thePort = basePort + 2
     withHive thePort theHive $ do
-        (stat1, body1) <- httpGet thePort "/anything"
-        (stat2, body2) <- httpGet thePort "/give/tarzan/a/banana"
-        (200, "You said anything")    @=? (stat1, C.responseBody body1)
-        (200, "tarzan want a banana") @=? (stat2, C.responseBody body2)
+        (stat1, resp1) <- httpGet thePort "/anything"
+        (stat2, resp2) <- httpGet thePort "/give/tarzan/a/banana"
+        (200, "You said anything")    @=? (stat1, C.responseBody resp1)
+        (200, "tarzan want a banana") @=? (stat2, C.responseBody resp2)
     where
       theHive :: Hive ()
       theHive = do
@@ -94,6 +96,17 @@ shallCaptureTest = do
                   fruit <- capture "fruit"
                   respondText $ name `mappend` " want a " `mappend` fruit
 
+-- | Shall report content type as text/plain.
+shallBeContentTypeTextTest :: Assertion
+shallBeContentTypeTextTest = do
+    let thePort = basePort + 3
+    withHive thePort theHive $ do
+        (stat, resp) <- httpGet thePort "/"
+        (200, Just "text/plain") @=? 
+            (stat, contentType $ C.responseHeaders resp)
+    where
+      theHive :: Hive ()
+      theHive = get `accepts` Anything `handledBy` respondText ""
 
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do
