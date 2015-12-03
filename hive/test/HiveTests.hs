@@ -5,7 +5,6 @@ module HiveTests
     , shallCaptureTest
     ) where
 
-import Data.ByteString.Lazy (ByteString)
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Async, async, cancel)
 import Control.Exception (bracket)
@@ -23,10 +22,12 @@ import Network.Hive ( Hive
                     , respondText
                     )
 import Network.HTTP.Client (Response)
-import Network.HTTP.Types (Status (..))
+import Network.HTTP.Types (Status (..), ResponseHeaders, hContentType)
 import Test.HUnit
 import Text.Printf
 
+import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Network.HTTP.Client as C
 
 -- | Access to a non-existing route shall result in a 500/Internal
@@ -94,7 +95,7 @@ shallCaptureTest = do
                   respondText $ name `mappend` " want a " `mappend` fruit
 
 
-httpGet :: Int -> String -> IO (Int, Response ByteString)
+httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
     let req' = req { C.checkStatus = \_ _ _ -> Nothing }
@@ -112,6 +113,9 @@ withHive port' hive' action =
       startHive = do
           let config = defaultHiveConfig { port = port' }
           async $ hive config hive'
+
+contentType :: ResponseHeaders -> Maybe BS.ByteString
+contentType = lookup hContentType
 
 basePort :: Int
 basePort = 8888
