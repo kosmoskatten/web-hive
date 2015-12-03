@@ -23,6 +23,7 @@ library
                        Network.Hive.Matcher
                        Network.Hive.Server
                        Network.Hive.Types
+                       Network.Hive.QueryLookup
   -- other-modules:       
   -- other-extensions:    
   build-depends:       base >=4.8 && <4.9
