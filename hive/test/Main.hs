@@ -18,6 +18,9 @@ testSuite =
         [ testCase "Test 500 if no endpoints" shallResp500Test
         , testCase "Test target routing" shallRouteTargetTest
         , testCase "Test capturing" shallCaptureTest
+        , testCase "Test single query value" shallReturnSingleQueryValueTest
+        , testCase "Test two query values" shallReturnTwoQueryValuesTest
+        , testCase "Test many query values" shallReturnManyQueryValuesTest
         , testCase "Test content type text" shallBeContentTypeTextTest
         ]    
     , testGroup "EndPoint Tests"

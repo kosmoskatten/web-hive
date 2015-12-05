@@ -18,8 +18,9 @@ module Network.Hive
     , Handler
     , HandlerResponse
     , capture
-    , respond
+    , respondWith
     , respondText
+    , serveDirectory
     , queryValue
     , queryValues
     , liftIO
@@ -44,8 +45,9 @@ import Network.Hive.Handler ( Handler
                             , Context (..)
                             , runHandler
                             , capture
-                            , respond
+                            , respondWith
                             , respondText
+                            , serveDirectory
                             , queryValue
                             , queryValues
                             , liftIO

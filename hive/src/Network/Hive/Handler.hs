@@ -8,8 +8,9 @@ module Network.Hive.Handler
     , HandlerResponse (..)
     , runHandler
     , capture
-    , respond
+    , respondWith
     , respondText
+    , serveDirectory
     , queryValue
     , queryValues
     , liftIO
@@ -27,9 +28,14 @@ import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
 import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types
-import Network.Wai (Response, Request (..), responseBuilder)
+import Network.Wai ( Response
+                   , Request (..)
+                   , responseBuilder
+                   , responseFile
+                   )
 import System.Log.FastLogger (LoggerSet)
 
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.Map.Lazy as Map
 import qualified Network.Hive.QueryLookup as QL
 
@@ -59,8 +65,8 @@ capture :: Text -> Handler Text
 capture text = fromJust . Map.lookup text . captureMap <$> ask
 
 -- | Generic respond function. Encapsulate a Wai Response.
-respond :: Response -> Handler HandlerResponse
-respond = return . HandlerResponse
+respondWith :: Response -> Handler HandlerResponse
+respondWith = return . HandlerResponse
 
 -- | Respond UTF-8 encoded text. The response is status 200/OK and marked
 -- as content type "text/plain".
@@ -69,8 +75,19 @@ respondText text = do
     let headers  = [(hContentType, "text/plain")]
         response = responseBuilder status200 headers $ 
                                    encodeUtf8Builder text
-    respond response
+    respondWith response
 
+-- | Serve the given directory, which is assumed to be on top of the
+-- current working directory or an absolute path. The path in the request
+-- is put on top of the served directory. The low level implementation of
+-- this function is by Wai's responseFile function.
+serveDirectory :: FilePath -> Handler HandlerResponse
+serveDirectory directory = do
+    requestPath <- BS.unpack . rawPathInfo . request <$> ask
+    let fullPath = directory `mappend` "/" `mappend` requestPath
+        response = responseFile status200 [] fullPath Nothing
+    respondWith response
+                                
 -- | Fetch the first - if any - query value for the given key.
 queryValue :: Text -> Handler (Maybe Text)
 queryValue key = QL.queryValue key . queryString . request <$> ask

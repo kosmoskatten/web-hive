@@ -29,11 +29,11 @@ matchHttp :: Request -> HttpEndPoint -> Maybe HttpMatch
 matchHttp request endPoint
     -- If the EndPoint's method is "DEFAULT" there's always a match.
     | httpMethod endPoint == methodDefault =
-        Just $ HttpMatch
-                 { captureHttp  = Map.empty
-                 , endPointHttp = endPoint
-                 , requestHttp  = request
-                 }
+        Just HttpMatch
+               { captureHttp  = Map.empty
+               , endPointHttp = endPoint
+               , requestHttp  = request
+               }
     -- If the request's method and the EndPoint's method is different
     -- there's always a mismatch.
     | httpMethod endPoint /= requestMethod request = Nothing
@@ -41,11 +41,11 @@ matchHttp request endPoint
     -- In this case we need to match the request path.
     | otherwise =
         case matchRequestPath (pathInfo request) (httpPath endPoint) of
-            Just cm -> Just $ HttpMatch
-                                { captureHttp  = cm
-                                , endPointHttp = endPoint
-                                , requestHttp  = request
-                                }
+            Just cm -> Just HttpMatch
+                              { captureHttp  = cm
+                              , endPointHttp = endPoint
+                              , requestHttp  = request
+                              }
             Nothing -> Nothing
 
 -- | Matching the path segments from the request with the EndPoints Path

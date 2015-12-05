@@ -118,7 +118,7 @@ guardedHttpRouteTest =
 
 -- | Count the number of EndPoints in the hive. Shall be five.
 rightNumberOfEndPointsTest :: Assertion
-rightNumberOfEndPointsTest = 5 @=? (length $ runHive sampleHive)
+rightNumberOfEndPointsTest = 5 @=? length (runHive sampleHive)
 
 -- | Separate the EndPoints.
 separateEndPointsTest :: Assertion
@@ -132,10 +132,10 @@ separateEndPointsTest = do
 sampleHive :: Hive ()
 sampleHive = do
     get </> "http1" `accepts` Anything 
-                    `handledBy` (respondText "")
+                    `handledBy` respondText ""
     webSocket </> "webSocket1" `servedBy` return ()
     post </> "http2" `accepts` Anything
-                     `handledBy` (respondText "")
+                     `handledBy` respondText ""
     webSocket </> "webSocket2" `servedBy` return ()
     put </> "http3" `accepts` Anything
-                    `handledBy` (respondText "")
+                    `handledBy` respondText ""

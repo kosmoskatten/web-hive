@@ -199,22 +199,22 @@ accepts = (,)
 handledBy :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
 handledBy (route, accept) handler = 
     tell 
-      [ Http $ HttpEndPoint
-                 { httpMethod  = method route
-                 , httpPath    = path route
-                 , httpAccept  = accept
-                 , httpHandler = handler
-                 }
+      [ Http HttpEndPoint
+               { httpMethod  = method route
+               , httpPath    = path route
+               , httpAccept  = accept
+               , httpHandler = handler
+               }
       ] 
 
 -- | Insert a WsRoute with its Server into the Hive.
 servedBy :: WsRoute -> Server () -> Hive ()
 servedBy (WsRoute p) server =
     tell
-      [ WebSocket $ WsEndPoint
-                      { wsPath   = p
-                      , wsServer = server 
-                      }
+      [ WebSocket WsEndPoint
+                  { wsPath   = p
+                  , wsServer = server 
+                  }
       ]
 
 -- | A "magic" http method for implementing default routes.

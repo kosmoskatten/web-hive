@@ -3,12 +3,16 @@ module HiveTests
     ( shallResp500Test
     , shallRouteTargetTest
     , shallCaptureTest
+    , shallReturnSingleQueryValueTest
+    , shallReturnTwoQueryValuesTest
+    , shallReturnManyQueryValuesTest
     , shallBeContentTypeTextTest
     ) where
 
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Async (Async, async, cancel)
 import Control.Exception (bracket)
+import Data.Maybe (fromJust)
 import Network.Hive ( Hive
                     , Accept (..)
                     , HiveConfig (..)
@@ -21,6 +25,8 @@ import Network.Hive ( Hive
                     , handledBy
                     , hive
                     , respondText
+                    , queryValue
+                    , queryValues
                     )
 import Network.HTTP.Client (Response)
 import Network.HTTP.Types (Status (..), ResponseHeaders, hContentType)
@@ -96,10 +102,57 @@ shallCaptureTest = do
                   fruit <- capture "fruit"
                   respondText $ name `mappend` " want a " `mappend` fruit
 
+-- | Test access of a single query value.
+shallReturnSingleQueryValueTest :: Assertion
+shallReturnSingleQueryValueTest = do
+    let thePort = basePort + 3
+    withHive thePort theHive $ do
+        (stat, resp) <- httpGet thePort "?foo=bar"
+        (200, "Got bar") @=? (stat, C.responseBody resp)
+    where
+      theHive :: Hive ()
+      theHive = get `accepts` Anything
+                    `handledBy` do
+                        value <- fromJust <$> queryValue "foo"
+                        respondText $ "Got " `mappend` value
+
+-- | Test access of two different query values.
+shallReturnTwoQueryValuesTest :: Assertion
+shallReturnTwoQueryValuesTest = do
+    let thePort = basePort + 4
+    withHive thePort theHive $ do
+        (stat, resp) <- httpGet thePort "?foo=bar&fie=baz"
+        (200, "Got bar baz") @=? (stat, C.responseBody resp)
+    where
+      theHive :: Hive ()
+      theHive = get `accepts` Anything
+                    `handledBy` do
+                        value1 <- fromJust <$> queryValue "foo"
+                        value2 <- fromJust <$> queryValue "fie"
+                        respondText $ "Got " `mappend` value1
+                                             `mappend` " "
+                                             `mappend` value2
+
+-- | Test access of many values to the same query variable.
+shallReturnManyQueryValuesTest :: Assertion
+shallReturnManyQueryValuesTest = do
+    let thePort = basePort + 5
+    withHive thePort theHive $ do
+        (stat, resp) <- httpGet thePort "?foo=bar&foo=fie"
+        (200, "Got bar fie") @=? (stat, C.responseBody resp)
+    where
+      theHive :: Hive ()
+      theHive = get `accepts` Anything
+                    `handledBy` do
+                        [value1, value2] <- queryValues "foo"
+                        respondText $ "Got " `mappend` value1
+                                             `mappend` " "
+                                             `mappend` value2
+
 -- | Shall report content type as text/plain.
 shallBeContentTypeTextTest :: Assertion
 shallBeContentTypeTextTest = do
-    let thePort = basePort + 3
+    let thePort = basePort + 6
     withHive thePort theHive $ do
         (stat, resp) <- httpGet thePort "/"
         (200, Just "text/plain") @=? 
