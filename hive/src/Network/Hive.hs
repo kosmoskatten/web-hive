@@ -19,6 +19,8 @@ module Network.Hive
     , HandlerResponse
     , capture
     , respondWith
+    , respondFile
+    , respondJSON
     , respondText
     , serveDirectory
     , queryValue
@@ -46,6 +48,8 @@ import Network.Hive.Handler ( Handler
                             , runHandler
                             , capture
                             , respondWith
+                            , respondFile
+                            , respondJSON
                             , respondText
                             , serveDirectory
                             , queryValue

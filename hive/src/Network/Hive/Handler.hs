@@ -9,6 +9,8 @@ module Network.Hive.Handler
     , runHandler
     , capture
     , respondWith
+    , respondFile
+    , respondJSON
     , respondText
     , serveDirectory
     , queryValue
@@ -23,6 +25,7 @@ import Control.Monad.Reader ( ReaderT
                             , runReaderT
                             , liftIO
                             )
+import Data.Aeson (ToJSON, encode)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
@@ -32,6 +35,7 @@ import Network.Wai ( Response
                    , Request (..)
                    , responseBuilder
                    , responseFile
+                   , responseLBS
                    )
 import System.Log.FastLogger (LoggerSet)
 
@@ -67,6 +71,22 @@ capture text = fromJust . Map.lookup text . captureMap <$> ask
 -- | Generic respond function. Encapsulate a Wai Response.
 respondWith :: Response -> Handler HandlerResponse
 respondWith = return . HandlerResponse
+
+-- | Respond with a specific file. Useful in case of re-routing the root
+-- endpoint to the application start file. The low level implementation of
+-- this function is by Wai's responseFile function.
+respondFile :: FilePath -> Handler HandlerResponse
+respondFile file = do
+    let response = responseFile status200 [] file Nothing
+    respondWith response
+
+-- | Respond with a JSON data structure. The response is status 200/OK and
+-- marked as content type "application/json".
+respondJSON :: ToJSON a => a -> Handler HandlerResponse
+respondJSON obj = do
+    let headers  = [(hContentType, "application/json")]
+        response = responseLBS status200 headers $ encode obj
+    respondWith response
 
 -- | Respond UTF-8 encoded text. The response is status 200/OK and marked
 -- as content type "text/plain".

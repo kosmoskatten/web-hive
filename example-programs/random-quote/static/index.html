@@ -6,8 +6,54 @@
         <script src="script/jquery-1.11.3.min.js"></script>
         <!-- Fetch client script -->
         <script src="script/random-client.js"></script>
+        <style>
+            div.layout {
+                width: 1024px;
+                display: table;
+            }
+            div.quoteBox {
+                width: 100%;
+                height: 100px;
+                margin-top: 2px;
+                border: 1px solid #729fcf;
+                border-radius: 8px;
+            }
+            div.quoteTextBox {
+                height: 80px;
+                float: left;
+                margin: 10px;
+            }
+            div.quoteImageBox {
+                height: 80px;
+                width: 80px;
+                float: left;
+                margin: 10px;
+            }
+            img.quote {
+                height: 100%;
+                width: 100%;
+                object-fit: contain;
+                border-radius: 12px;
+            }
+            button.quote {
+                width: 100%;
+                display: table-row;
+            }
+            p.author {
+                margin-top: 1px;
+                color: #204a87;
+                font-family: Verdana, Geneva, Sans-Serif;
+            }
+            p.quote {
+                margin-top: 1px;
+                color: #3465a4;
+                font-family: Verdana, Geneva, Sans-Serif;
+                font-style: italic;
+                font-size: 80%;
+                word-wrap: break-word;
+            }
+        </style>
     </head>
     <body>
-        <p>Hej</p>
     </body>
 </html>

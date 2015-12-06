@@ -1,0 +1,33 @@
+[ { "author": "Linus Torvalds",
+    "quote" : "Talk is cheap. Show me the code.",
+    "image" : "/image/linus-torvalds.jpg"
+  },
+  { "author": "Linus Torvalds",
+    "quote" : "GCC is crap.",
+    "image" : "/image/linus-torvalds.jpg"
+  },
+  { "author": "Linus Torvalds",
+    "quote" : "Most days I wake up I think I'm the luckiest bastard alive",
+    "image" : "/image/linus-torvalds.jpg"
+  },
+  { "author": "John Carmack",
+    "quote" : "The speed of light sucks.",
+    "image" : "/image/john-carmack.jpg"
+  },
+  { "author": "John Carmack",
+    "quote" : "Story in a game is like a story in a porn movie. It's expected to be there, but it's not that important.",
+    "image" : "/image/john-carmack.jpg"
+  },
+  { "author": "John Carmack",
+    "quote" : "It's done when it's done.",
+    "image" : "/image/john-carmack.jpg"
+  },
+  { "author": "Simon Peyton Jones",
+    "quote" : "The next Haskell will be strict.",
+    "image" : "/image/simon-peyton-jones.jpg"
+  },
+  { "author": "Simon Peyton Jones",
+    "quote" : "Avoid success at all cost.",
+    "image" : "/image/simon-peyton-jones.jpg"
+  }
+]
