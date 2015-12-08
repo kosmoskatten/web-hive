@@ -10,6 +10,10 @@
     "quote" : "Most days I wake up I think I'm the luckiest bastard alive",
     "image" : "/image/linus-torvalds.jpg"
   },
+  { "author": "Linus Torvalds",
+    "quote" : "Most good programmers do programming not because they expect to get paid or get adulation by the public, but because it is fun to program.",
+    "image" : "/image/linus-torvalds.jpg"
+  },
   { "author": "John Carmack",
     "quote" : "The speed of light sucks.",
     "image" : "/image/john-carmack.jpg"
@@ -29,5 +33,17 @@
   { "author": "Simon Peyton Jones",
     "quote" : "Avoid success at all cost.",
     "image" : "/image/simon-peyton-jones.jpg"
+  },
+  { "author": "Alan Kay",
+    "quote" : "Most software today is very much like an Egyptian pyramid with millions of bricks piled on top of each other, with no structural integrity, but just done by brute force and thousands of slaves.",
+    "image" : "/image/alan-kay.jpg"
+  },
+  { "author": "Donald Knuth",
+    "quote" : "People think that computer science is the art of geniuses but the actual reality is the opposite, just many people doing things that build on each other, like a wall of mini stones.",
+    "image" : "/image/donald-knuth.jpg"
+  },
+  { "author": "Donald Knuth",
+    "quote" : "The real problem is that programmers have spent far too much time worrying about efficiency in the wrong places and at the wrong times; premature optimization is the root of all evil (or at least most of it) in programming.",
+    "image" : "/image/donald-knuth.jpg"
   }
 ]
