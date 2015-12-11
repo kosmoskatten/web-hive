@@ -18,6 +18,7 @@ module Network.Hive
     , Handler
     , HandlerResponse
     , capture
+    , redirectTo
     , respondWith
     , respondFile
     , respondJSON
@@ -47,6 +48,7 @@ import Network.Hive.Handler ( Handler
                             , Context (..)
                             , runHandler
                             , capture
+                            , redirectTo
                             , respondWith
                             , respondFile
                             , respondJSON

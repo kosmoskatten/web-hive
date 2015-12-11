@@ -38,10 +38,9 @@ main = do
 
     -- Start Hive with its default configuration.
     hive defaultHiveConfig $ do
-        -- Catch the root of the service. Respond with the index.html file.
+        -- Catch the root of the service. Redirect to the index file.
         get `accepts` Anything
-            `handledBy` do
-                respondFile $ staticDirectory `mappend` "/index.html"
+            `handledBy` redirectTo "index.html"
 
         -- The REST call to fetch a new random quote.
         get </> "random-quote" 

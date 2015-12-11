@@ -8,6 +8,7 @@ module Network.Hive.Handler
     , HandlerResponse (..)
     , runHandler
     , capture
+    , redirectTo
     , respondWith
     , respondFile
     , respondJSON
@@ -26,6 +27,7 @@ import Control.Monad.Reader ( ReaderT
                             , liftIO
                             )
 import Data.Aeson (ToJSON, encode)
+import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
@@ -40,6 +42,7 @@ import Network.Wai ( Response
 import System.Log.FastLogger (LoggerSet)
 
 import qualified Data.ByteString.Char8 as BS
+import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map.Lazy as Map
 import qualified Network.Hive.QueryLookup as QL
 
@@ -67,6 +70,13 @@ runHandler action = runReaderT (extrReader action)
 -- present.
 capture :: Text -> Handler Text
 capture text = fromJust . Map.lookup text . captureMap <$> ask
+
+-- | Redirect using HTTP response code 301 to the specified path.
+redirectTo :: ByteString -> Handler HandlerResponse
+redirectTo to = do
+    let headers  = [(hLocation, to)]
+        response = responseLBS status301 headers LBS.empty
+    respondWith response
 
 -- | Generic respond function. Encapsulate a Wai Response.
 respondWith :: Response -> Handler HandlerResponse
