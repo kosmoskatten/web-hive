@@ -57,7 +57,7 @@ main = do
 -- | The static directory path. Assumes that the serivice is started from
 -- the repository root directory.
 staticDirectory :: FilePath
-staticDirectory = "example-programs/random-quote/static"
+staticDirectory = "example-programs/random-quote/site"
 
 -- | Decode the quote file.
 decodeFromFile :: FilePath -> IO (Maybe [Quote])
