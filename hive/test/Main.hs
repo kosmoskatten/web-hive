@@ -22,6 +22,7 @@ testSuite =
         , testCase "Test two query values" shallReturnTwoQueryValuesTest
         , testCase "Test many query values" shallReturnManyQueryValuesTest
         , testCase "Test content type text" shallBeContentTypeTextTest
+        , testCase "Test error handler" shallInvokeErrorHandlerTest
         ]    
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest

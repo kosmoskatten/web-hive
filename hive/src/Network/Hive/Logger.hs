@@ -8,7 +8,7 @@ module Network.Hive.Logger
     ) where
 
 import Data.Monoid ((<>))
-import Data.Time (getCurrentTime)
+import Data.Time (getZonedTime)
 import System.Log.FastLogger ( LoggerSet
                              , defaultBufSize
                              , newStdoutLoggerSet
@@ -38,7 +38,7 @@ createLogger Stderr = newStderrLoggerSet defaultBufSize
 -- | Push a log message, with timestamp and the specified log level.
 logWithLevel :: LoggerSet -> LogLevel -> String -> IO ()
 logWithLevel loggerSet logLevel msg = do
-    now <- getCurrentTime
+    now <- getZonedTime
     let logStr = toLogStr (show now) <> toLogStr " ("
                                      <> toLogStr (show logLevel)
                                      <> toLogStr "): "

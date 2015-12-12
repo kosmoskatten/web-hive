@@ -7,6 +7,7 @@ module HiveTests
     , shallReturnTwoQueryValuesTest
     , shallReturnManyQueryValuesTest
     , shallBeContentTypeTextTest
+    , shallInvokeErrorHandlerTest
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -35,6 +36,7 @@ import Text.Printf
 
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.Text as T
 import qualified Network.HTTP.Client as C
 
 -- | Access to a non-existing route shall result in a 500/Internal
@@ -43,8 +45,8 @@ shallResp500Test :: Assertion
 shallResp500Test = do
     let thePort = basePort
     withHive thePort theHive $ do
-        (sc, _) <- httpGet thePort "/"
-        500 @=? sc
+        (stat, resp) <- httpGet thePort "/"
+        (500, "No handler found for: /") @=? (stat, C.responseBody resp)
     where
       theHive :: Hive ()
       theHive = return ()
@@ -160,6 +162,20 @@ shallBeContentTypeTextTest = do
     where
       theHive :: Hive ()
       theHive = get `accepts` Anything `handledBy` respondText ""
+
+-- | Shall invoke the default error handler when the handler is throwing an
+-- exception.
+shallInvokeErrorHandlerTest :: Assertion
+shallInvokeErrorHandlerTest = do
+    let thePort = basePort + 7
+    withHive thePort theHive $ do
+        (stat, resp) <- httpGet thePort "/"
+        (500, "divide by zero") @=? (stat, C.responseBody resp)
+    where
+      theHive :: Hive ()
+      theHive = get `accepts` Anything `handledBy` do
+          let str = show $ (1 :: Int) `div` 0
+          respondText $ T.pack str
 
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do

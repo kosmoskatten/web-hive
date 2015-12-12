@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings          #-}
 -- | Handler is a module implementing a monad and an API to help write
@@ -7,6 +8,7 @@ module Network.Hive.Handler
     , Context (..)
     , HandlerResponse (..)
     , runHandler
+    , defaultErrorHandler
     , capture
     , redirectTo
     , respondWith
@@ -16,9 +18,13 @@ module Network.Hive.Handler
     , serveDirectory
     , queryValue
     , queryValues
+    , logInfo
+    , logWarning
+    , logError
     , liftIO
     ) where
 
+import Control.Exception (Exception (..))
 import Control.Monad.Reader ( ReaderT
                             , MonadReader
                             , MonadIO
@@ -31,6 +37,10 @@ import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
+import Network.Hive.Logger ( LoggerSet
+                           , LogLevel (..)
+                           , logWithLevel
+                           )
 import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types
 import Network.Wai ( Response
@@ -39,7 +49,6 @@ import Network.Wai ( Response
                    , responseFile
                    , responseLBS
                    )
-import System.Log.FastLogger (LoggerSet)
 
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -65,6 +74,16 @@ newtype Handler a =
 -- | Invoke a handler.
 runHandler :: Handler a -> Context -> IO a
 runHandler action = runReaderT (extrReader action)
+
+-- | The default error handler. Just write the received exception on the
+-- error log and respond with code 500 and the exception as body.
+defaultErrorHandler :: Exception e => e -> Handler HandlerResponse
+defaultErrorHandler excp = do
+    let str      = displayException excp
+        headers  = [(hContentType, "text/plain")]
+        response = responseLBS status500 headers $ LBS.pack str
+    logError str
+    respondWith response
 
 -- | Get the value of a capture. Will throw exception if capture is not
 -- present.
@@ -93,7 +112,7 @@ respondFile file = do
 -- | Respond with a JSON data structure. The response is status 200/OK and
 -- marked as content type "application/json".
 respondJSON :: ToJSON a => a -> Handler HandlerResponse
-respondJSON obj = do
+respondJSON !obj = do
     let headers  = [(hContentType, "application/json")]
         response = responseLBS status200 headers $ encode obj
     respondWith response
@@ -101,7 +120,7 @@ respondJSON obj = do
 -- | Respond UTF-8 encoded text. The response is status 200/OK and marked
 -- as content type "text/plain".
 respondText :: Text -> Handler HandlerResponse
-respondText text = do
+respondText !text = do
     let headers  = [(hContentType, "text/plain")]
         response = responseBuilder status200 headers $ 
                                    encodeUtf8Builder text
@@ -125,3 +144,20 @@ queryValue key = QL.queryValue key . queryString . request <$> ask
 -- | Fetch all - if any - qery values for the given key.
 queryValues :: Text -> Handler [Text]
 queryValues key = QL.queryValues key . queryString . request <$> ask
+
+-- | Log a string on the Info level.
+logInfo :: String -> Handler ()
+logInfo = logIt Info
+
+-- | Log a string on the Warning level.
+logWarning :: String -> Handler ()
+logWarning = logIt Warning
+
+-- | Log a string on the Error level.
+logError :: String -> Handler ()
+logError = logIt Error
+
+logIt :: LogLevel -> String -> Handler ()
+logIt level str = do
+    logger <- loggerSet <$> ask
+    liftIO $ logWithLevel logger level str

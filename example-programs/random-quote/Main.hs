@@ -40,12 +40,15 @@ main = do
     hive defaultHiveConfig $ do
         -- Catch the root of the service. Redirect to the index file.
         get `accepts` Anything
-            `handledBy` redirectTo "index.html"
+            `handledBy` do
+                logInfo "Handler will redirect!"
+                redirectTo "index.html"
 
         -- The REST call to fetch a new random quote.
         get </> "random-quote" 
             `accepts` Anything
             `handledBy` do
+                logInfo "Yes Sir! Will serve API!"
                 theQuote <- liftIO selector
                 respondJSON theQuote
 
