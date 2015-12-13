@@ -4,6 +4,7 @@
 module Network.Hive.EndPoint
     ( EndPoint (..)
     , HttpEndPoint (..)
+    , HttpMethod (..)
     , WsEndPoint (..)
     , Accept (..)
     , Path (..)
@@ -16,6 +17,7 @@ module Network.Hive.EndPoint
     , separateEndPoints
 
     -- Create HttpRoutes.
+    , match
     , get
     , post
     , put
@@ -89,6 +91,13 @@ data Accept
     = Anything
     deriving (Eq, Show)
 
+data HttpMethod
+    = GET
+    | DELETE
+    | POST
+    | PUT
+    deriving Show
+
 -- | Components of a URL path.
 data Path
     = Path !Text
@@ -142,6 +151,15 @@ separateEndPoints = foldl' separate ([], [])
       separate :: EndPointPairs -> EndPoint -> EndPointPairs
       separate (hs, ws) (Http ep)      = (hs ++ [ep], ws)
       separate (hs, ws) (WebSocket ep) = (hs, ws ++ [ep])
+
+match :: HttpMethod -> HttpRoute
+match m = HttpRoute
+          { method = translateMethod m
+          , path   = []
+          }
+            
+translateMethod :: HttpMethod -> Method
+translateMethod GET = methodGet
 
 -- | Make an empty route for "GET".
 get :: HttpRoute

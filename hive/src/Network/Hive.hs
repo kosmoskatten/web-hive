@@ -7,10 +7,12 @@ module Network.Hive
 
     -- Re-export of stuff from EndPoint.
     , Hive
+    , HttpMethod (..)
     , Accept (..)
     , (</>)
     , (</:>)
     , accepts
+    , match
     , get
     , defaultRoute
     , handledBy
@@ -42,10 +44,12 @@ import Data.Time (NominalDiffTime, getCurrentTime, diffUTCTime)
 import Network.Hive.EndPoint ( Hive
                              , Accept (..)
                              , HttpEndPoint (..)
+                             , HttpMethod (..)
                              , WsEndPoint (..)
                              , (</>)
                              , (</:>)
                              , accepts
+                             , match
                              , get
                              , defaultRoute
                              , separateEndPoints

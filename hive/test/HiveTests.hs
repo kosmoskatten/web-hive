@@ -15,6 +15,7 @@ import Control.Concurrent.Async (Async, async, cancel)
 import Control.Exception (bracket)
 import Data.Maybe (fromJust)
 import Network.Hive ( Hive
+                    , HttpMethod (..)
                     , Accept (..)
                     , HiveConfig (..)
                     , (</>), (</:>)
@@ -22,6 +23,7 @@ import Network.Hive ( Hive
                     , capture
                     , defaultHiveConfig
                     , defaultRoute
+                    , match
                     , get
                     , handledBy
                     , hive
@@ -70,13 +72,13 @@ shallRouteTargetTest = do
     where
       theHive :: Hive ()
       theHive = do
-          get </> "hello" </> "world" 
-              `accepts` Anything
-              `handledBy` respondText "Hello, world!"
-          get </> "deep" </> "purple"
-              `accepts` Anything
-              `handledBy` respondText "Deep Purple"
-          get `accepts` Anything `handledBy` respondText "I'm root!"
+          match GET </> "hello" </> "world" 
+                    `accepts` Anything
+                    `handledBy` respondText "Hello, world!"
+          match GET </> "deep" </> "purple"
+                    `accepts` Anything
+                    `handledBy` respondText "Deep Purple"
+          match GET `accepts` Anything `handledBy` respondText "I'm root!"
           defaultRoute `handledBy` respondText "default"
 
 -- | Access to captures shall match and be captured.
