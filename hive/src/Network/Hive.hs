@@ -31,6 +31,9 @@ module Network.Hive
     , logWarning
     , logError
     , liftIO
+
+    -- Re-export of stuff from Logger.
+    , LoggerStream (..)
     ) where
 
 import Control.Exception (Exception, SomeException, catch)

@@ -13,6 +13,7 @@ import System.Log.FastLogger ( LoggerSet
                              , defaultBufSize
                              , newStdoutLoggerSet
                              , newStderrLoggerSet
+                             , newFileLoggerSet
                              , pushLogStrLn
                              , toLogStr
                              )
@@ -21,6 +22,7 @@ import System.Log.FastLogger ( LoggerSet
 data LoggerStream
     = Stdout
     | Stderr
+    | ToFile !FilePath
     deriving Show
 
 -- | Define the log level.
@@ -32,8 +34,9 @@ data LogLevel
 
 -- | Create a new LoggerSet using the LoggerStream specification.
 createLogger :: LoggerStream -> IO LoggerSet
-createLogger Stdout = newStdoutLoggerSet defaultBufSize
-createLogger Stderr = newStderrLoggerSet defaultBufSize
+createLogger Stdout        = newStdoutLoggerSet defaultBufSize
+createLogger Stderr        = newStderrLoggerSet defaultBufSize
+createLogger (ToFile file) = newFileLoggerSet defaultBufSize file
 
 -- | Push a log message, with timestamp and the specified log level.
 logWithLevel :: LoggerSet -> LogLevel -> String -> IO ()
