@@ -9,6 +9,7 @@ module Network.Hive.Handler
     , HandlerResponse (..)
     , runHandler
     , defaultErrorHandler
+    , bodyJSON
     , capture
     , redirectTo
     , respondWith
@@ -32,7 +33,7 @@ import Control.Monad.Reader ( ReaderT
                             , runReaderT
                             , liftIO
                             )
-import Data.Aeson (ToJSON, encode)
+import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
@@ -45,6 +46,7 @@ import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types
 import Network.Wai ( Response
                    , Request (..)
+                   , lazyRequestBody
                    , responseBuilder
                    , responseFile
                    , responseLBS
@@ -84,6 +86,14 @@ defaultErrorHandler excp = do
         response = responseLBS status500 headers $ LBS.pack str
     logError str
     respondWith response
+
+-- | Get the body as a JSON object. Will throw exception if not possible
+-- to decode to the requested object.
+bodyJSON :: FromJSON a => Handler a
+bodyJSON = do
+    req  <- request <$> ask
+    body <- liftIO $ lazyRequestBody req
+    return (fromJust $ decode body)
 
 -- | Get the value of a capture. Will throw exception if capture is not
 -- present.

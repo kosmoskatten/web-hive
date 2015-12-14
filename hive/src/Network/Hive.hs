@@ -19,6 +19,7 @@ module Network.Hive
     -- Re-export of stuff from Handler.
     , Handler
     , HandlerResponse
+    , bodyJSON
     , capture
     , redirectTo
     , respondWith
@@ -59,6 +60,7 @@ import Network.Hive.Handler ( Handler
                             , Context (..)
                             , runHandler
                             , defaultErrorHandler
+                            , bodyJSON
                             , capture
                             , redirectTo
                             , respondWith
@@ -141,10 +143,10 @@ httpService logger config endPoints req respReceived = do
       findAndExecHandler =
         -- Try finding a handler matching the request.
         case msum $ map (matchHttp req) endPoints of
-            Just match -> do
-                let handler = httpHandler $ endPointHttp match
+            Just theMatch -> do
+                let handler = httpHandler $ endPointHttp theMatch
                     context = Context
-                                { captureMap = captureHttp match
+                                { captureMap = captureHttp theMatch
                                 , request    = req
                                 , loggerSet  = logger
                                 }
