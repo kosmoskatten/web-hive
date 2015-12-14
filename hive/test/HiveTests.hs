@@ -8,6 +8,7 @@ module HiveTests
     , shallReturnManyQueryValuesTest
     , shallBeContentTypeTextTest
     , shallInvokeErrorHandlerTest
+    , shallDifferentiateMethodsTest
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -31,7 +32,13 @@ import Network.Hive ( Hive
                     , queryValues
                     )
 import Network.HTTP.Client (Response)
-import Network.HTTP.Types (Status (..), ResponseHeaders, hContentType)
+import Network.HTTP.Types ( Status (..)
+                          , ResponseHeaders
+                          , hContentType
+                          , methodDelete
+                          , methodPost
+                          , methodPut
+                          )
 import Test.HUnit
 import Text.Printf
 
@@ -179,10 +186,73 @@ shallInvokeErrorHandlerTest = do
           let str = show $ (1 :: Int) `div` 0
           respondText $ T.pack str
 
+-- | Shall differentiate on method on the same resource.
+shallDifferentiateMethodsTest :: Assertion
+shallDifferentiateMethodsTest = do
+    let thePort = basePort + 8
+    withHive thePort theHive $ do
+        (stat1, resp1) <- httpGet thePort "/resource"
+        (stat2, resp2) <- httpDelete thePort "/resource"
+        (stat3, resp3) <- httpPost thePort "/resource" LBS.empty
+        (stat4, resp4) <- httpPut thePort "/resource" LBS.empty
+        (200, "GET")    @=? (stat1, C.responseBody resp1)
+        (200, "DELETE") @=? (stat2, C.responseBody resp2)
+        (200, "POST")   @=? (stat3, C.responseBody resp3)
+        (200, "PUT")    @=? (stat4, C.responseBody resp4)
+    where
+      theHive :: Hive ()
+      theHive = do
+          match GET </> "resource"
+                    `guardedBy` None
+                    `handledBy` respondText "GET"
+          match DELETE </> "resource"
+                       `guardedBy` None
+                       `handledBy` respondText "DELETE"
+          match POST </> "resource"
+                     `guardedBy` None
+                     `handledBy` respondText "POST"
+          match PUT </> "resource"
+                    `guardedBy` None
+                    `handledBy` respondText "PUT"
+
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
     let req' = req { C.checkStatus = \_ _ _ -> Nothing }
+    manager <- C.newManager C.defaultManagerSettings
+    resp    <- C.httpLbs req' manager
+    return (statusCode $ C.responseStatus resp, resp)
+
+httpDelete :: Int -> String -> IO (Int, Response LBS.ByteString)
+httpDelete p url = do
+    req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
+    let req' = req { C.method      = methodDelete
+                   , C.checkStatus = \_ _ _ -> Nothing 
+                   }
+    manager <- C.newManager C.defaultManagerSettings
+    resp    <- C.httpLbs req' manager
+    return (statusCode $ C.responseStatus resp, resp)
+
+httpPost :: Int -> String -> LBS.ByteString 
+         -> IO (Int, Response LBS.ByteString)
+httpPost p url body = do
+    req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
+    let req' = req { C.method      = methodPost
+                   , C.checkStatus = \_ _ _ -> Nothing
+                   , C.requestBody = C.RequestBodyLBS body
+                   }
+    manager <- C.newManager C.defaultManagerSettings
+    resp    <- C.httpLbs req' manager
+    return (statusCode $ C.responseStatus resp, resp)
+
+httpPut :: Int -> String -> LBS.ByteString 
+        -> IO (Int, Response LBS.ByteString)
+httpPut p url body = do
+    req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
+    let req' = req { C.method      = methodPut
+                   , C.checkStatus = \_ _ _ -> Nothing
+                   , C.requestBody = C.RequestBodyLBS body
+                   }
     manager <- C.newManager C.defaultManagerSettings
     resp    <- C.httpLbs req' manager
     return (statusCode $ C.responseStatus resp, resp)

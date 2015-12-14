@@ -23,6 +23,7 @@ testSuite =
         , testCase "Test many query values" shallReturnManyQueryValuesTest
         , testCase "Test content type text" shallBeContentTypeTextTest
         , testCase "Test error handler" shallInvokeErrorHandlerTest
+        , testCase "Test method diff" shallDifferentiateMethodsTest
         ]    
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest
