@@ -9,7 +9,7 @@ module Network.Hive.Matcher
 import Data.Text (Text)
 import Network.Hive.EndPoint ( HttpEndPoint (..)
                              , Path (..)
-                             , methodDefault
+                             , methodMatchAll
                              )
 import Network.Hive.Types (CaptureMap)
 import Network.Wai (Request (..))
@@ -27,8 +27,8 @@ data HttpMatch
 -- | Match a request with an EndPoint.
 matchHttp :: Request -> HttpEndPoint -> Maybe HttpMatch
 matchHttp request endPoint
-    -- If the EndPoint's method is "DEFAULT" there's always a match.
-    | httpMethod endPoint == methodDefault =
+    -- If the EndPoint's method is "MATCHALL" there's always a match.
+    | httpMethod endPoint == methodMatchAll =
         Just HttpMatch
                { captureHttp  = Map.empty
                , endPointHttp = endPoint

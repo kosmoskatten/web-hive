@@ -8,13 +8,12 @@ module Network.Hive
     -- Re-export of stuff from EndPoint.
     , Hive
     , HttpMethod (..)
-    , Accept (..)
+    , Guard (..)
     , (</>)
     , (</:>)
-    , accepts
+    , guardedBy
     , match
-    , get
-    , defaultRoute
+    , matchAll
     , handledBy
 
     -- Re-export of stuff from Handler.
@@ -42,16 +41,15 @@ import Control.Exception (Exception, SomeException, catch)
 import Control.Monad (msum)
 import Data.Time (NominalDiffTime, getCurrentTime, diffUTCTime)
 import Network.Hive.EndPoint ( Hive
-                             , Accept (..)
+                             , Guard (..)
                              , HttpEndPoint (..)
                              , HttpMethod (..)
                              , WsEndPoint (..)
                              , (</>)
                              , (</:>)
-                             , accepts
+                             , guardedBy
                              , match
-                             , get
-                             , defaultRoute
+                             , matchAll
                              , separateEndPoints
                              , handledBy
                              , runHive
@@ -140,7 +138,7 @@ httpService logger config endPoints req respReceived = do
 
       -- Find and execute a matching handler.
       findAndExecHandler :: IO Response
-      findAndExecHandler = do
+      findAndExecHandler =
         -- Try finding a handler matching the request.
         case msum $ map (matchHttp req) endPoints of
             Just match -> do

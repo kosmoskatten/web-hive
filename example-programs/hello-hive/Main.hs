@@ -3,16 +3,17 @@ module Main
     ( main
     ) where
 
-import Network.Hive ( Accept (..)
+import Network.Hive ( Guard (..) 
                     , Handler
                     , HandlerResponse
+                    , HttpMethod (..)
                     , (</>), (</:>)
-                    , accepts
-                    , defaultRoute
-                    , get
+                    , guardedBy
                     , handledBy
                     , hive
                     , defaultHiveConfig
+                    , match
+                    , matchAll
                     , capture
                     , respondText
                     , queryValue
@@ -38,23 +39,23 @@ main :: IO ()
 main = hive defaultHiveConfig $ do
     -- /hello/<name>
     -- Handler implemented as a separate function.
-    get </> "hello" </:> "name" 
-        `accepts` Anything 
-        `handledBy` helloHandler
+    match GET </> "hello" </:> "name" 
+              `guardedBy` None 
+              `handledBy` helloHandler
 
     -- /hello-q
     -- Handler implemented as an inline action.
-    get </> "hello-q"
-        `accepts` Anything
-        `handledBy` do
-            maybeName <- queryValue "name"
-            case maybeName of
-                Just name -> respondText $ "Hello Q " `mappend` name
-                                                      `mappend` "\n"
-                Nothing   -> respondText "Hello Q anonymous\n"
+    match GET </> "hello-q"
+             `guardedBy` None
+             `handledBy` do
+                 maybeName <- queryValue "name"
+                 case maybeName of
+                     Just name -> respondText $ "Hello Q " `mappend` name
+                                                           `mappend` "\n"
+                     Nothing   -> respondText "Hello Q anonymous\n"
 
     -- Default route. Catches all and must be the last route.
-    defaultRoute `handledBy` respondText "You hit the default handler\n"
+    matchAll `handledBy` respondText "You hit the default handler\n"
 
 helloHandler :: Handler HandlerResponse
 helloHandler = do

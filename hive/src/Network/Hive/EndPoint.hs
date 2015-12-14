@@ -3,10 +3,10 @@
 -- | Module implementing the specification of end points for the Hive.
 module Network.Hive.EndPoint
     ( EndPoint (..)
+    , Guard (..)
     , HttpEndPoint (..)
     , HttpMethod (..)
     , WsEndPoint (..)
-    , Accept (..)
     , Path (..)
     , HttpRoute (..)
     , WsRoute (..)
@@ -18,11 +18,7 @@ module Network.Hive.EndPoint
 
     -- Create HttpRoutes.
     , match
-    , get
-    , post
-    , put
-    , delete
-    , defaultRoute
+    , matchAll
 
     -- Create WsRoutes
     , webSocket
@@ -32,14 +28,14 @@ module Network.Hive.EndPoint
     , (</:>)
 
     -- Manipulate HttpRoutes.
-    , accepts
+    , guardedBy
 
     -- Insert EndPoints.
     , handledBy
     , servedBy
 
     -- Default method for the default route.
-    , methodDefault
+    , methodMatchAll
     ) where
 
 import Control.Monad.Identity (Identity, runIdentity)
@@ -75,7 +71,7 @@ data HttpEndPoint
     = HttpEndPoint
         { httpMethod  :: !Method
         , httpPath    :: ![Path]
-        , httpAccept  :: !Accept
+        , httpAccept  :: !Guard
         , httpHandler :: Handler HandlerResponse
         }
 
@@ -85,12 +81,13 @@ data WsEndPoint
         , wsServer :: Server ()
         } 
 
--- | Content type quard to Http routes. The Accept is guarding the "Accept"
+-- | Content type quard to Http routes. The Guard is guarding the "Accept"
 -- header field in the request.
-data Accept
-    = Anything
+data Guard
+    = None
     deriving (Eq, Show)
 
+-- | The HTTP methods implemented by Hive.
 data HttpMethod
     = GET
     | DELETE
@@ -120,7 +117,7 @@ newtype WsRoute = WsRoute [Path]
     deriving (Eq, Show)
 
 -- | A guarded Http route.
-type GuardedHttpRoute = (HttpRoute, Accept)
+type GuardedHttpRoute = (HttpRoute, Guard)
 
 -- | A separation of the different kind of EndPoints
 type EndPointPairs = ([HttpEndPoint], [WsEndPoint])
@@ -152,50 +149,27 @@ separateEndPoints = foldl' separate ([], [])
       separate (hs, ws) (Http ep)      = (hs ++ [ep], ws)
       separate (hs, ws) (WebSocket ep) = (hs, ws ++ [ep])
 
+-- | Create a HttpRoute with the given method.
 match :: HttpMethod -> HttpRoute
 match m = HttpRoute
           { method = translateMethod m
           , path   = []
           }
-            
-translateMethod :: HttpMethod -> Method
-translateMethod GET = methodGet
+    where            
+      translateMethod :: HttpMethod -> Method
+      translateMethod GET    = methodGet
+      translateMethod DELETE = methodDelete
+      translateMethod POST   = methodPost
+      translateMethod PUT    = methodPut
 
--- | Make an empty route for "GET".
-get :: HttpRoute
-get = HttpRoute
-        { method = methodGet
-        , path   = []
-        }
-
--- | Make an empty route for "POST".
-post :: HttpRoute
-post = HttpRoute
-         { method = methodPost
-         , path   = []
-         }
-
--- | Make an empty route for "PUT".
-put :: HttpRoute
-put = HttpRoute
-        { method = methodPut
-        , path   = []
-        }
-
--- | Make an empty route for "DELETE".
-delete :: HttpRoute
-delete = HttpRoute
-           { method = methodDelete
-           , path   = []
-           }
-
--- | Make a default route.
-defaultRoute :: GuardedHttpRoute
-defaultRoute = ( HttpRoute
-                   { method = methodDefault
-                   , path   = []
-                   }
-               , Anything )
+-- | Make a GuardedHttpRoute that's matching everything; method, path 
+-- and guard.
+matchAll :: GuardedHttpRoute
+matchAll = ( HttpRoute
+             { method = methodMatchAll
+             , path   = []
+             }
+           , None )
 
 -- | Make an empty route for a Web Socket.
 webSocket :: WsRoute
@@ -210,8 +184,8 @@ webSocket = WsRoute []
 (</:>) route text = addPath route (Capture text)
 
 -- | Build a GuardedHttpRoute.
-accepts :: HttpRoute -> Accept -> GuardedHttpRoute
-accepts = (,)
+guardedBy :: HttpRoute -> Guard -> GuardedHttpRoute
+guardedBy = (,)
 
 -- | Insert a GuardedHttpRoute with its Handler into the Hive.
 handledBy :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
@@ -235,7 +209,7 @@ servedBy (WsRoute p) server =
                   }
       ]
 
--- | A "magic" http method for implementing default routes.
-methodDefault :: Method
-methodDefault = "DEFAULT"
+-- | A "magic" http method for implementing catch all matches.
+methodMatchAll :: Method
+methodMatchAll = "MATCHALL"
 
