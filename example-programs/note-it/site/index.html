@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Note It!</title>
+        <!-- Fetch locally stored version of jQuery -->
+        <script src="script/jquery-1.11.3.min.js"></script>
+        <!-- Fetch client script -->
+        <script src="script/note-it-client.js"></script>
+        <style>
+            div.layout {
+                width: 100%;
+
+                display: -moz-box;
+                -moz-box-pack: center;
+                -moz-box-align: center;
+
+                display: -webkit-box;
+                -webkit-box-pack: center;
+                -webkit-box-align: center;
+
+                display: box;
+                box-pack: center;
+                box-align: center;
+            }
+            div.box {
+                width: 600px;
+            }
+            div.note {
+                width: 100%;
+                height: 100px;
+                background-color: #729fcf;
+                padding: 10px;
+            }
+            textarea.note {
+                border-radius: 10px;
+                color: #729fcf;
+                height: 50px;
+                width: 500px;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            button.note {
+                color: white;
+                border-radius: 4px;
+                text-shadow: 0 1px rgba(0, 0, 0, 0.2);
+                background-color: #3465a4;
+                float: right;
+                margin-top: 10px;
+                margin-right: 50px;
+            }
+        </style>
+    </head>
+    <body>
+    <!-- <div class="layout">
+        <div class="box">
+            <div class="note">
+                <textarea autofocus="autofocus" 
+                          placeholder="Note something ..."
+                          class="note"
+                          id="noteedit"></textarea>
+                <button class="note" id="notesubmit">Note It!</button>
+            </div>
+        </div>
+    </div> 
+    -->
+
+    </body>
+</html>
