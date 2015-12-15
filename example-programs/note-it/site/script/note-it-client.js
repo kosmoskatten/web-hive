@@ -2,20 +2,23 @@ $("document").ready(function() {
     var $layout=createLayout();
     $("body").append($layout);
     
-    $("#notebutton").attr("disabled", true);
+    disableNoteButton();
 
     $("#notetextarea").on("input", function() {
         var str=$(this).val().trim();
         if (str.length > 0) {
-            $("#notebutton").attr("disabled", false);
+            enableNoteButton();
         } else {
-            $("#notebutton").attr("disabled", true);
+            disableNoteButton();
         }
     });
 
     $("#notebutton").click(function() {
-        var str=$("#notetextarea").val().trim();
+        var $note$textarea=$("#notetextarea");
+        var str=$note$textarea.val().trim();
         alert(str);
+        disableNoteButton();
+        $note$textarea.val("");
     });
 });
 
@@ -42,4 +45,16 @@ function createLayout() {
     $layout.append($box);
 
     return $layout;
+}
+
+function disableNoteButton() {
+    var $note$button=$("#notebutton");
+    $note$button.attr("disabled", true);
+    $note$button.removeClass("note-enabled").addClass("note-disabled");
+}
+
+function enableNoteButton() {
+    var $note$button=$("#notebutton");
+    $note$button.attr("disabled", false);
+    $note$button.removeClass("note-disabled").addClass("note-enabled");
 }
