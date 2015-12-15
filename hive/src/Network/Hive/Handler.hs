@@ -93,6 +93,7 @@ bodyJSON :: FromJSON a => Handler a
 bodyJSON = do
     req  <- request <$> ask
     body <- liftIO $ lazyRequestBody req
+    liftIO $ print body
     return (fromJust $ decode body)
 
 -- | Get the value of a capture. Will throw exception if capture is not

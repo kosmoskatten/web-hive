@@ -16,7 +16,7 @@ $("document").ready(function() {
     $("#notebutton").click(function() {
         var $note$textarea=$("#notetextarea");
         var str=$note$textarea.val().trim();
-        alert(str);
+        postNewNote(str);
         disableNoteButton();
         $note$textarea.val("");
     });
@@ -45,6 +45,12 @@ function createLayout() {
     $layout.append($box);
 
     return $layout;
+}
+
+function postNewNote(str) {
+    $.post("/note", JSON.stringify({newNote: str}), function(data) {
+        alert(data.resourceId);
+    }, "json");
 }
 
 function disableNoteButton() {
