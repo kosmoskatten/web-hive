@@ -5,7 +5,8 @@ module Main
     ) where
 
 import Data.Aeson
-import Data.Text
+import Data.Hashable (hashWithSalt)
+import Data.Text (Text)
 import Data.Time (ZonedTime, getZonedTime)
 import GHC.Generics (Generic)
 import Network.Hive
@@ -50,3 +51,7 @@ handleNewNote n = do
 
 siteDir :: FilePath
 siteDir = "example-programs/note-it/site"
+
+-- | A dumb hash to identify a Note.
+nodeId :: Text -> IO Int
+nodeId = undefined

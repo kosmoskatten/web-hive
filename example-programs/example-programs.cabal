@@ -43,7 +43,9 @@ executable note-it
   main-is:             Main.hs
   build-depends:       base >=4.8 && <4.9
                      , aeson
+                     , hashable
                      , hive
+                     , random
                      , text
                      , time
   hs-source-dirs:      note-it
