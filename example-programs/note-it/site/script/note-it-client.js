@@ -20,13 +20,23 @@ $("document").ready(function() {
         disableNoteButton();
         $note$textarea.val("");
     });
+
+    $("#box").on("click", "img.entry", function() {
+        var $id=$(this).attr("id");
+        var $idStr="#e" + $id;
+        alert($idStr);
+        var $entry=$($idStr);
+        alert($entry.attr("class"));
+
+        $entry.remove();
+    });
 });
 
 // Create the main layout.
 function createLayout() {
     var $layout=$("<div/>", {class: "layout"});
-    var $box=$("<div/>", {class: "box"});
-    var $note$div=$("<div/>", {class: "note"});
+    var $box=$("<div/>", {class: "box", id: "box"});
+    var $note$div=$("<div/>", {class: "note", id: "notediv"});
     var $note$textarea=$("<textarea/>", 
                          {class: "note",
                           autofocus: "autofocus",
@@ -48,8 +58,12 @@ function createLayout() {
 }
 
 function postNewNote(str) {
-    $.post("/note", JSON.stringify({newNote: str}), function(data) {
-        alert(data.resourceId);
+    $.post("/note", JSON.stringify({newNote: str}), function(obj) {
+        //alert(data.resourceId);
+        var $entry=createEntry(obj);
+        $entry.hide();
+        $("#notediv").after($entry);
+        $entry.show("slow");
     }, "json");
 }
 
@@ -63,4 +77,17 @@ function enableNoteButton() {
     var $note$button=$("#notebutton");
     $note$button.attr("disabled", false);
     $note$button.removeClass("note-disabled").addClass("note-enabled");
+}
+
+function createEntry(obj) {
+    var $entry=$("<div/>", {class: "entry-box", id: "e123"});
+    var $note=$("<p/>", {class: "entry", text: obj.note});
+    var $del=$("<img/>", {class: "entry",
+                          id: "123",
+                          src: "/image/delete.png",
+                          title: "Delete entry"});
+    $entry.append($note);
+    $entry.append($del);
+
+    return $entry;
 }
