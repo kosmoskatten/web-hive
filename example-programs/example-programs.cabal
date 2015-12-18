@@ -46,6 +46,7 @@ executable note-it
                      , hashable
                      , hive
                      , random
+                     , stm
                      , text
                      , time
   hs-source-dirs:      note-it
