@@ -95,7 +95,7 @@ deleteNote (Database db) = do
       maybeDeleteNote :: Text -> IO Bool
       maybeDeleteNote nid =
           atomically $ do
-              let deleteFunc = (filter $ \n -> nid /= resourceId n)
+              let deleteFunc = filter $ \n -> nid /= resourceId n
               isFound <- any (\n -> nid == resourceId n) <$> readTVar db
               if isFound 
                   then do modifyTVar' db deleteFunc
