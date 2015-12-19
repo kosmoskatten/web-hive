@@ -39,18 +39,13 @@ main = do
     -- Start Hive with its default configuration.
     hive defaultHiveConfig $ do
         -- Catch the root of the service. Redirect to the index file.
-        match GET `guardedBy` None
-                  `handledBy` do
-                      logInfo "Handler will redirect!"
-                      redirectTo "index.html"
+        match GET <!> None
+                  ==> do logInfo "Handler will redirect!"
+                         redirectTo "index.html"
 
         -- The REST call to fetch a new random quote.
-        match GET </> "random-quote" 
-                 `guardedBy` None
-                 `handledBy` do
-                     logInfo "Yes Sir! Will serve API!"
-                     theQuote <- liftIO selector
-                     respondJSON Ok theQuote
+        match GET </> "random-quote" <!> None
+                  ==> (respondJSON Ok =<< liftIO selector)
 
         -- By default, serve the static directory. Used for static files
         -- like Javascripts and images.

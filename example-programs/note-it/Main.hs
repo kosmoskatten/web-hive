@@ -45,25 +45,20 @@ main = do
     db <- Database <$> newTVarIO []
     hive defaultHiveConfig $ do
         -- Match a GET on the site root. Redirect to index.html.
-        match GET `guardedBy` None
-                  `handledBy` redirectTo "index.html"
+        match GET <!> None
+                  ==> redirectTo "index.html"
 
         -- Match a GET request on the note resource. List all notes.
-        match GET </> "note"
-                  `guardedBy` None
-                  `handledBy` (respondJSON Ok =<< listNotes db)
+        match GET </> "note" <!> None
+                  ==> (respondJSON Ok =<< listNotes db)
 
         -- Match a POST request on the note resource. Create a new note.
-        match POST </> "note" 
-                   `guardedBy` None
-                   `handledBy` (respondJSON Ok   =<< 
-                                handleNewNote db =<< 
-                                bodyJSON)
+        match POST </> "note" <!> None
+                   ==> (respondJSON Ok =<< handleNewNote db =<< bodyJSON)
 
         -- Match a DELETE request on a specific note. Delete the note.
-        match DELETE </> "note" </:> "id"
-                     `guardedBy` None
-                     `handledBy` deleteNote db
+        match DELETE </> "note" </:> "id" <!> None
+                     ==> deleteNote db
 
         -- The match all clause will do static serving
         matchAll `handledBy` serveDirectory siteDir

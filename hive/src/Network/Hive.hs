@@ -11,6 +11,8 @@ module Network.Hive
     , Guard (..)
     , (</>)
     , (</:>)
+    , (<!>)
+    , (==>)
     , guardedBy
     , match
     , matchAll
@@ -49,6 +51,8 @@ import Network.Hive.EndPoint ( Hive
                              , WsEndPoint (..)
                              , (</>)
                              , (</:>)
+                             , (<!>)
+                             , (==>)
                              , guardedBy
                              , match
                              , matchAll

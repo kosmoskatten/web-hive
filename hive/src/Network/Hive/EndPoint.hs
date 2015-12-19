@@ -29,9 +29,11 @@ module Network.Hive.EndPoint
 
     -- Manipulate HttpRoutes.
     , guardedBy
+    , (<!>)
 
     -- Insert EndPoints.
     , handledBy
+    , (==>)
     , servedBy
 
     -- Default method for the default route.
@@ -187,6 +189,10 @@ webSocket = WsRoute []
 guardedBy :: HttpRoute -> Guard -> GuardedHttpRoute
 guardedBy = (,)
 
+-- | Operator alias to guardedBy.
+(<!>) :: HttpRoute -> Guard -> GuardedHttpRoute
+(<!>) = guardedBy
+
 -- | Insert a GuardedHttpRoute with its Handler into the Hive.
 handledBy :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
 handledBy (route, accept) handler = 
@@ -198,6 +204,10 @@ handledBy (route, accept) handler =
                , httpHandler = handler
                }
       ] 
+
+-- | Operator alias to handledBy.
+(==>) :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
+(==>) = handledBy
 
 -- | Insert a WsRoute with its Server into the Hive.
 servedBy :: WsRoute -> Server () -> Hive ()
