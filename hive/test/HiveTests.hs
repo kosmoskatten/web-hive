@@ -19,6 +19,7 @@ import Network.Hive ( Hive
                     , HttpMethod (..)
                     , Guard (..)
                     , HiveConfig (..)
+                    , StatusCode (..)
                     , (</>), (</:>)
                     , guardedBy
                     , capture
@@ -80,12 +81,13 @@ shallRouteTargetTest = do
       theHive = do
           match GET </> "hello" </> "world" 
                     `guardedBy` None
-                    `handledBy` respondText "Hello, world!"
+                    `handledBy` respondText Ok "Hello, world!"
           match GET </> "deep" </> "purple"
                     `guardedBy` None
-                    `handledBy` respondText "Deep Purple"
-          match GET `guardedBy` None `handledBy` respondText "I'm root!"
-          matchAll  `handledBy` respondText "default"
+                    `handledBy` respondText Ok "Deep Purple"
+          match GET `guardedBy` None 
+                    `handledBy` respondText Ok "I'm root!"
+          matchAll  `handledBy` respondText Ok "default"
 
 -- | Access to captures shall match and be captured.
 shallCaptureTest :: Assertion
@@ -103,14 +105,14 @@ shallCaptureTest = do
                     `guardedBy` None
                     `handledBy` do
                         word <- capture "word"
-                        respondText $ "You said " `mappend` word
+                        respondText Ok $ "You said " `mappend` word
 
           match GET </> "give" </:> "name" </> "a" </:> "fruit"
                     `guardedBy` None
                     `handledBy` do
                         name  <- capture "name"
                         fruit <- capture "fruit"
-                        respondText $ 
+                        respondText Ok $ 
                             name `mappend` " want a " `mappend` fruit
 
 -- | Test access of a single query value.
@@ -125,7 +127,7 @@ shallReturnSingleQueryValueTest = do
       theHive = match GET `guardedBy` None
                           `handledBy` do
                               value <- fromJust <$> queryValue "foo"
-                              respondText $ "Got " `mappend` value
+                              respondText Ok $ "Got " `mappend` value
 
 -- | Test access of two different query values.
 shallReturnTwoQueryValuesTest :: Assertion
@@ -140,9 +142,9 @@ shallReturnTwoQueryValuesTest = do
                           `handledBy` do
                               value1 <- fromJust <$> queryValue "foo"
                               value2 <- fromJust <$> queryValue "fie"
-                              respondText $ "Got " `mappend` value1
-                                                   `mappend` " "
-                                                   `mappend` value2
+                              respondText Ok $ "Got " `mappend` value1
+                                                      `mappend` " "
+                                                      `mappend` value2
 
 -- | Test access of many values to the same query variable.
 shallReturnManyQueryValuesTest :: Assertion
@@ -156,9 +158,9 @@ shallReturnManyQueryValuesTest = do
       theHive = match GET `guardedBy` None
                           `handledBy` do
                               [value1, value2] <- queryValues "foo"
-                              respondText $ "Got " `mappend` value1
-                                                   `mappend` " "
-                                                   `mappend` value2
+                              respondText Ok $ "Got " `mappend` value1
+                                                      `mappend` " "
+                                                      `mappend` value2
 
 -- | Shall report content type as text/plain.
 shallBeContentTypeTextTest :: Assertion
@@ -170,7 +172,7 @@ shallBeContentTypeTextTest = do
             (stat, contentType $ C.responseHeaders resp)
     where
       theHive :: Hive ()
-      theHive = match GET `guardedBy` None `handledBy` respondText ""
+      theHive = match GET `guardedBy` None `handledBy` respondText Ok ""
 
 -- | Shall invoke the default error handler when the handler is throwing an
 -- exception.
@@ -184,7 +186,7 @@ shallInvokeErrorHandlerTest = do
       theHive :: Hive ()
       theHive = match GET `guardedBy` None `handledBy` do
           let str = show $ (1 :: Int) `div` 0
-          respondText $ T.pack str
+          respondText Ok $ T.pack str
 
 -- | Shall differentiate on method on the same resource.
 shallDifferentiateMethodsTest :: Assertion
@@ -197,23 +199,23 @@ shallDifferentiateMethodsTest = do
         (stat4, resp4) <- httpPut thePort "/resource" LBS.empty
         (200, "GET")    @=? (stat1, C.responseBody resp1)
         (200, "DELETE") @=? (stat2, C.responseBody resp2)
-        (200, "POST")   @=? (stat3, C.responseBody resp3)
-        (200, "PUT")    @=? (stat4, C.responseBody resp4)
+        (201, "POST")   @=? (stat3, C.responseBody resp3)
+        (201, "PUT")    @=? (stat4, C.responseBody resp4)
     where
       theHive :: Hive ()
       theHive = do
           match GET </> "resource"
                     `guardedBy` None
-                    `handledBy` respondText "GET"
+                    `handledBy` respondText Ok "GET"
           match DELETE </> "resource"
                        `guardedBy` None
-                       `handledBy` respondText "DELETE"
+                       `handledBy` respondText Ok "DELETE"
           match POST </> "resource"
                      `guardedBy` None
-                     `handledBy` respondText "POST"
+                     `handledBy` respondText Created "POST"
           match PUT </> "resource"
                     `guardedBy` None
-                    `handledBy` respondText "PUT"
+                    `handledBy` respondText Created "PUT"
 
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do

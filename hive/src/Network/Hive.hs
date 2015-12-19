@@ -18,6 +18,7 @@ module Network.Hive
 
     -- Re-export of stuff from Handler.
     , Handler
+    , StatusCode (..)
     , HandlerResponse
     , bodyJSON
     , capture
@@ -56,6 +57,7 @@ import Network.Hive.EndPoint ( Hive
                              , runHive
                              )
 import Network.Hive.Handler ( Handler
+                            , StatusCode (..)
                             , HandlerResponse (..)
                             , Context (..)
                             , runHandler

@@ -50,7 +50,7 @@ main = do
                  `handledBy` do
                      logInfo "Yes Sir! Will serve API!"
                      theQuote <- liftIO selector
-                     respondJSON theQuote
+                     respondJSON Ok theQuote
 
         -- By default, serve the static directory. Used for static files
         -- like Javascripts and images.

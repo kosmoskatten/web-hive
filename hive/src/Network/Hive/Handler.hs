@@ -5,6 +5,7 @@
 -- HTTP handler functions.
 module Network.Hive.Handler
     ( Handler
+    , StatusCode (..)
     , Context (..)
     , HandlerResponse (..)
     , runHandler
@@ -43,7 +44,15 @@ import Network.Hive.Logger ( LoggerSet
                            , logWithLevel
                            )
 import Network.Hive.Types (CaptureMap)
-import Network.HTTP.Types
+import Network.HTTP.Types ( Status
+                          , hContentType
+                          , hLocation
+                          , status200
+                          , status201
+                          , status301
+                          , status404
+                          , status500
+                          )
 import Network.Wai ( Response
                    , Request (..)
                    , lazyRequestBody
@@ -61,6 +70,15 @@ import qualified Network.Hive.QueryLookup as QL
 -- Response type.
 newtype HandlerResponse = HandlerResponse Response
 
+-- | Status codes for the response generating functions.
+data StatusCode
+    = Ok
+    | Created
+    | MovedPermanently
+    | NotFound
+    deriving Show
+
+-- | The context data for a running Handler.
 data Context 
     = Context
         { captureMap :: !CaptureMap
@@ -104,7 +122,8 @@ capture text = fromJust . Map.lookup text . captureMap <$> ask
 redirectTo :: ByteString -> Handler HandlerResponse
 redirectTo to = do
     let headers  = [(hLocation, to)]
-        response = responseLBS status301 headers LBS.empty
+        statusCode = toStatus MovedPermanently
+        response = responseLBS statusCode headers LBS.empty
     respondWith response
 
 -- | Generic respond function. Encapsulate a Wai Response.
@@ -119,21 +138,23 @@ respondFile file = do
     let response = responseFile status200 [] file Nothing
     respondWith response
 
--- | Respond with a JSON data structure. The response is status 200/OK and
--- marked as content type "application/json".
-respondJSON :: ToJSON a => a -> Handler HandlerResponse
-respondJSON !obj = do
-    let headers  = [(hContentType, "application/json")]
-        response = responseLBS status200 headers $ encode obj
+-- | Respond with a JSON data structure. The response is marked as content 
+-- type "application/json".
+respondJSON :: ToJSON a => StatusCode -> a -> Handler HandlerResponse
+respondJSON !sc !obj = do
+    let headers    = [(hContentType, "application/json")]
+        statusCode = toStatus sc
+        response   = responseLBS statusCode headers $ encode obj
     respondWith response
 
--- | Respond UTF-8 encoded text. The response is status 200/OK and marked
--- as content type "text/plain".
-respondText :: Text -> Handler HandlerResponse
-respondText !text = do
-    let headers  = [(hContentType, "text/plain")]
-        response = responseBuilder status200 headers $ 
-                                   encodeUtf8Builder text
+-- | Respond UTF-8 encoded text. The response is marked as content 
+-- type "text/plain".
+respondText :: StatusCode -> Text -> Handler HandlerResponse
+respondText !sc !text = do
+    let headers    = [(hContentType, "text/plain")]
+        statusCode = toStatus sc
+        response   = responseBuilder statusCode headers $ 
+                                     encodeUtf8Builder text
     respondWith response
 
 -- | Serve the given directory, which is assumed to be on top of the
@@ -171,3 +192,9 @@ logIt :: LogLevel -> String -> Handler ()
 logIt level str = do
     logger <- loggerSet <$> ask
     liftIO $ logWithLevel logger level str
+
+toStatus :: StatusCode -> Status
+toStatus Ok               = status200
+toStatus Created          = status201
+toStatus MovedPermanently = status301
+toStatus NotFound         = status404

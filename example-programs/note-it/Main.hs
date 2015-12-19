@@ -51,12 +51,12 @@ main = do
         -- Match a GET request on the note resource. List all notes.
         match GET </> "note"
                   `guardedBy` None
-                  `handledBy` (respondJSON =<< listNotes db)
+                  `handledBy` (respondJSON Ok =<< listNotes db)
 
         -- Match a POST request on the note resource. Create a new note.
         match POST </> "note" 
                    `guardedBy` None
-                   `handledBy` (respondJSON      =<< 
+                   `handledBy` (respondJSON Ok   =<< 
                                 handleNewNote db =<< 
                                 bodyJSON)
 
@@ -94,8 +94,8 @@ deleteNote (Database db) = do
     noteId    <- capture "id"
     isDeleted <- liftIO $ maybeDeleteNote noteId
     if isDeleted 
-        then respondText ""
-        else respondText "Noes ..."
+        then respondText Ok ""
+        else respondText NotFound "Noes ..."
     where
       maybeDeleteNote :: Text -> IO Bool
       maybeDeleteNote nid =

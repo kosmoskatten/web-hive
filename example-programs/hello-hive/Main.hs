@@ -5,6 +5,7 @@ module Main
 
 import Network.Hive ( Guard (..) 
                     , Handler
+                    , StatusCode (..)
                     , HandlerResponse
                     , HttpMethod (..)
                     , (</>), (</:>)
@@ -50,14 +51,14 @@ main = hive defaultHiveConfig $ do
              `handledBy` do
                  maybeName <- queryValue "name"
                  case maybeName of
-                     Just name -> respondText $ "Hello Q " `mappend` name
-                                                           `mappend` "\n"
-                     Nothing   -> respondText "Hello Q anonymous\n"
+                     Just name -> respondText Ok $ "Hello Q " `mappend` name
+                                                              `mappend` "\n"
+                     Nothing   -> respondText Ok "Hello Q anonymous\n"
 
     -- Default route. Catches all and must be the last route.
-    matchAll `handledBy` respondText "You hit the default handler\n"
+    matchAll `handledBy` respondText Ok "You hit the default handler\n"
 
 helloHandler :: Handler HandlerResponse
 helloHandler = do
     name <- capture "name"
-    respondText $ "Hello " `mappend` name `mappend` "\n"
+    respondText Ok $ "Hello " `mappend` name `mappend` "\n"

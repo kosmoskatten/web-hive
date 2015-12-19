@@ -15,7 +15,7 @@ module EndPointTests
     , separateEndPointsTest
     ) where
 
-import Network.Hive.Handler (respondText)
+import Network.Hive.Handler (StatusCode (..), respondText)
 import Network.Hive.EndPoint ( Guard (..) 
                              , Hive
                              , HttpMethod (..)
@@ -130,10 +130,10 @@ separateEndPointsTest = do
 sampleHive :: Hive ()
 sampleHive = do
     match GET </> "http1" `guardedBy` None 
-                          `handledBy` respondText ""
+                          `handledBy` respondText Ok ""
     webSocket </> "webSocket1" `servedBy` return ()
     match POST </> "http2" `guardedBy` None
-                           `handledBy` respondText ""
+                           `handledBy` respondText Ok ""
     webSocket </> "webSocket2" `servedBy` return ()
     match PUT </> "http3" `guardedBy` None
-                          `handledBy` respondText ""
+                          `handledBy` respondText Ok ""
