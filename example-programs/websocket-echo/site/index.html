@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocket echo!</title>
+    <!-- Fetch locally stored version of jQuery -->
+    <script src="script/jquery-1.11.3.min.js"></script>
+    <!-- Fetch client script -->
+    <script src="script/websocket-echo-client.js"></script>
+    <style>
+      body {
+        background-color: #d3d7cf;
+      }
+      div.layout {
+        width: 100%;
+
+        display: -moz-box;
+        -moz-box-pack: center;
+        -moz-box-alignt: center;
+
+        display: -webkit-box;
+        -webkit-box-pack: center;
+        -webkit-box-align: center;
+
+        display: box;
+        box-pack: center;
+        box-align: center;
+      }
+      div.box {
+        width: 600px;
+      }
+      div.input {
+        width: 600px;
+        //background-color: #729fcf;
+      }
+      textarea.input {
+        width: 525px;
+        resize: none;
+        float: left;
+      }
+      button.input {
+        float: right;
+      }
+      h3.echo {
+        font-family: Verdana, Genova, Sans-serif;
+        color: #729fcf;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <div class="box">
+        <div class="input">
+          <textarea class="input" id="thetext" rows="1"
+                    placeholder="Write something"></textarea>
+          <button class="input" id="submit">Echo It!</button>
+        </div>
+        <br>
+        <h3 class="echo" id="theecho">----</h3>
+      </div>
+    </div>
+  </body>
+</html>
