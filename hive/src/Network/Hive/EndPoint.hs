@@ -81,7 +81,7 @@ data WsEndPoint
     = WsEndPoint
         { wsPath   :: ![Path]
         , wsServer :: Server ()
-        } 
+        }
 
 -- | Content type quard to Http routes. The Guard is guarding the "Accept"
 -- header field in the request.
@@ -107,7 +107,7 @@ data Path
     deriving (Eq, Show)
 
 -- | A Http route. Carries both a method and a path.
-data HttpRoute = 
+data HttpRoute =
     HttpRoute
       { method :: !Method
       , path   :: ![Path]
@@ -157,14 +157,14 @@ match m = HttpRoute
           { method = translateMethod m
           , path   = []
           }
-    where            
+    where
       translateMethod :: HttpMethod -> Method
       translateMethod GET    = methodGet
       translateMethod DELETE = methodDelete
       translateMethod POST   = methodPost
       translateMethod PUT    = methodPut
 
--- | Make a GuardedHttpRoute that's matching everything; method, path 
+-- | Make a GuardedHttpRoute that's matching everything; method, path
 -- and guard.
 matchAll :: GuardedHttpRoute
 matchAll = ( HttpRoute
@@ -195,15 +195,15 @@ guardedBy = (,)
 
 -- | Insert a GuardedHttpRoute with its Handler into the Hive.
 handledBy :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
-handledBy (route, accept) handler = 
-    tell 
+handledBy (route, accept) handler =
+    tell
       [ Http HttpEndPoint
                { httpMethod  = method route
                , httpPath    = path route
                , httpAccept  = accept
                , httpHandler = handler
                }
-      ] 
+      ]
 
 -- | Operator alias to handledBy.
 (==>) :: GuardedHttpRoute -> Handler HandlerResponse -> Hive ()
@@ -215,7 +215,7 @@ servedBy (WsRoute p) server =
     tell
       [ WebSocket WsEndPoint
                   { wsPath   = p
-                  , wsServer = server 
+                  , wsServer = server
                   }
       ]
 

@@ -4,18 +4,120 @@
 -- WebSocket serving functions.
 module Network.Hive.Server
     ( Server
+    , ServerContext (..)
+    , DataMessage (..)
     , runServer
+    , acceptRequest
+    , rejectRequest
+    , receiveDataMessage
+    , sendBinaryMessage
+    , sendTextMessage
+    , logInfo
+    , logWarning
+    , logError
     ) where
 
-import Control.Monad.Reader (ReaderT, MonadReader, MonadIO, runReaderT)
+import Control.Monad.State.Strict ( StateT
+                                  , MonadState
+                                  , MonadIO
+                                  , evalStateT
+                                  , get
+                                  , put
+                                  , liftIO
+                                  )
+import Data.ByteString (ByteString)
+import Network.Hive.Logger ( LoggerSet
+                           , LogLevel (..)
+                           , logWithLevel
+                           )
+import Network.Hive.Types (CaptureMap)
+import Network.WebSockets ( Connection
+                          , DataMessage (..)
+                          , PendingConnection
+                          )
 
-data Context = Context
+import qualified Data.ByteString.Lazy as LBS
+import qualified Network.WebSockets as WS
+
+data ServerContext
+    = ServerContext
+       { captureMap :: !CaptureMap
+       , loggerSet  :: !LoggerSet
+       , pendConn   :: !PendingConnection
+       , conn       :: !(Maybe Connection)
+       }
 
 -- | The Server monad, in which server actions are performed.
-newtype Server a = 
-    Server { extrReader :: ReaderT Context IO a}
-    deriving (Applicative, Functor, Monad, MonadReader Context, MonadIO)
+newtype Server a =
+    Server { extrState :: StateT ServerContext IO a}
+    deriving (Applicative, Functor, Monad
+             , MonadState ServerContext, MonadIO)
 
 -- | Invoke a server.
-runServer :: Server a -> IO a
-runServer action = runReaderT (extrReader action) Context
+runServer :: Server a -> ServerContext -> IO a
+runServer action = evalStateT (extrState action)
+
+-- | Accept a pending request.
+acceptRequest :: Server ()
+acceptRequest = do
+    state   <- get
+    newConn <- liftIO $ WS.acceptRequest (pendConn state)
+    put $ state { conn = Just newConn }
+
+-- | Reject a pending request.
+rejectRequest :: ByteString -> Server ()
+rejectRequest message = do
+    state <- get
+    liftIO $ WS.rejectRequest (pendConn state) message
+
+-- | Receive some data as a DataMessage
+receiveDataMessage :: Server DataMessage
+receiveDataMessage = do
+    state <- get
+    case conn state of
+        Just theConn ->
+          liftIO $ WS.receiveDataMessage theConn
+        Nothing      -> do
+          -- TODO: This should really be changed to exception handling.
+          logError "No valid WebSocket connection at receiveDataMessage"
+          return $ Binary LBS.empty
+
+-- | Send a binary message.
+sendBinaryMessage :: LBS.ByteString -> Server ()
+sendBinaryMessage message = do
+    state <- get
+    case conn state of
+        Just theConn ->
+          liftIO $ WS.sendBinaryData theConn message
+        Nothing      ->
+          -- TODO: This should really be changed to exception handling.
+          logError "No valid WebSocket connection at sendBinaryMessage"
+
+-- | Send a text message.
+sendTextMessage :: LBS.ByteString -> Server ()
+sendTextMessage message = do
+    state <- get
+    case conn state of
+        Just theConn ->
+          liftIO $ WS.sendTextData theConn message
+        Nothing      ->
+          -- TODO: This should really be changed to exception handling.
+          logError "No valid WebSocket connection at sendBinaryMessage"
+
+-- | Log a string on the Info level.
+logInfo :: String -> Server ()
+logInfo = logIt Info
+
+-- | Log a string on the Warning level.
+logWarning :: String -> Server ()
+logWarning = logIt Warning
+
+-- | Log a string on the Error level.
+logError :: String -> Server ()
+logError = logIt Error
+
+logIt :: LogLevel -> String -> Server ()
+logIt level str = do
+    logger <- loggerSet <$> get
+    liftIO $ logWithLevel logger level str
+

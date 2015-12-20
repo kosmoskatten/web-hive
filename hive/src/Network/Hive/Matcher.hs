@@ -1,22 +1,29 @@
 -- | Functionality to determine if a specified EndPoint is matching an
 -- incoming request.
 module Network.Hive.Matcher
-    ( HttpMatch (..) 
-    , matchHttp 
+    ( HttpMatch (..)
+    , WsMatch (..)
+    , matchHttp
+    , matchWebSocket
     , matchRequestPath
     ) where
 
+import Data.ByteString (ByteString)
 import Data.Text (Text)
+import Data.Text.Encoding (decodeUtf8)
 import Network.Hive.EndPoint ( HttpEndPoint (..)
+                             , WsEndPoint (..)
                              , Path (..)
                              , methodMatchAll
                              )
 import Network.Hive.Types (CaptureMap)
 import Network.Wai (Request (..))
+import Network.WebSockets (RequestHead, requestPath)
 
+import qualified Data.ByteString.Char8 as BS
 import qualified Data.Map.Lazy as Map
 
--- | The result if a match is made.
+-- | The result if a HTTP match is made.
 data HttpMatch
     = HttpMatch
         { captureHttp  :: CaptureMap
@@ -24,7 +31,14 @@ data HttpMatch
         , requestHttp  :: Request
         }
 
--- | Match a request with an EndPoint.
+-- | The result if a Websocket match is made.
+data WsMatch
+    = WsMatch
+        { captureWs  :: CaptureMap
+        , endPointWs :: WsEndPoint
+        }
+
+-- | Match a HTTP request with a HttpEndPoint.
 matchHttp :: Request -> HttpEndPoint -> Maybe HttpMatch
 matchHttp request endPoint
     -- If the EndPoint's method is "MATCHALL" there's always a match.
@@ -48,6 +62,17 @@ matchHttp request endPoint
                               }
             Nothing -> Nothing
 
+-- | Match a WebSocket request with a WsEndpoint.
+matchWebSocket :: RequestHead -> WsEndPoint -> Maybe WsMatch
+matchWebSocket request endPoint =
+    case matchRequestPath (splitPath $ requestPath request)
+                          (wsPath endPoint) of
+        Just cm -> Just WsMatch
+                          { captureWs  = cm
+                          , endPointWs = endPoint
+                          }
+        Nothing -> Nothing
+
 -- | Matching the path segments from the request with the EndPoints Path
 -- list. All non capture parts must match exactly and the lists must be of
 -- equal length. The capture are saved as key/value pairs in the CapturMap.
@@ -62,3 +87,8 @@ matchRequestPath = match Map.empty
         | t == p                     = match cm ts ps
         | otherwise                  = Nothing
       match cm (t:ts) (Capture c:ps) = match (Map.insert c t cm) ts ps
+
+-- | Split a raw ByteString request path to a list of Text path segments.
+splitPath :: ByteString -> [Text]
+splitPath = map decodeUtf8 . filter (not . BS.null) . BS.splitWith (== '/')
+

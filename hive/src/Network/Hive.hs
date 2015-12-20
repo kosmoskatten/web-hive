@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE Rank2Types                #-}
+{-# LANGUAGE DisambiguateRecordFields  #-}
 module Network.Hive
     ( HiveConfig (..)
     , hive
@@ -17,6 +18,8 @@ module Network.Hive
     , match
     , matchAll
     , handledBy
+    , servedBy
+    , webSocket
 
     -- Re-export of stuff from Handler.
     , Handler
@@ -36,6 +39,15 @@ module Network.Hive
     , logWarning
     , logError
     , liftIO
+
+    -- Re-export of stuff from Server.
+    , Server
+    , DataMessage (..)
+    , acceptRequest
+    , rejectRequest
+    , receiveDataMessage
+    , sendBinaryMessage
+    , sendTextMessage
 
     -- Re-export of stuff from Logger.
     , LoggerStream (..)
@@ -58,6 +70,8 @@ import Network.Hive.EndPoint ( Hive
                              , matchAll
                              , separateEndPoints
                              , handledBy
+                             , servedBy
+                             , webSocket
                              , runHive
                              )
 import Network.Hive.Handler ( Handler
@@ -86,8 +100,22 @@ import Network.Hive.Logger ( LoggerStream (..)
                            , LoggerSet
                            , createLogger
                            , logWithLevel
-                           ) 
-import Network.Hive.Matcher (HttpMatch (..), matchHttp)
+                           )
+import Network.Hive.Matcher ( HttpMatch (..)
+                            , WsMatch (..)
+                            , matchHttp
+                            , matchWebSocket
+                            )
+import Network.Hive.Server ( Server
+                           , ServerContext (..)
+                           , DataMessage (..)
+                           , runServer
+                           , acceptRequest
+                           , rejectRequest
+                           , receiveDataMessage
+                           , sendBinaryMessage
+                           , sendTextMessage
+                           )
 import Network.HTTP.Types
 import Network.Wai
 import Network.Wai.Handler.Warp (run)
@@ -103,7 +131,7 @@ data HiveConfig
     = HiveConfig
         { port         :: !Int
         , loggerStream :: !LoggerStream
-        , errorHandler :: forall e. Exception e => 
+        , errorHandler :: forall e. Exception e =>
                               e -> Handler HandlerResponse
         }
 
@@ -121,14 +149,33 @@ hive config hive' = do
         printf "Started with %d WebSocket endpoints" (length wsEndPoints)
 
     -- Start Warp with the WebSocket and HTTP services.
-    run (port config) $ 
+    run (port config) $
         websocketsOr WS.defaultConnectionOptions
                      (webSocketService logger wsEndPoints)
                      (httpService logger config httpEndPoints)
 
 -- | Callback action that is invoked for each WebSocket request.
 webSocketService :: LoggerSet -> [WsEndPoint] -> WS.ServerApp
-webSocketService = undefined
+webSocketService logger endPoints pend = do
+    -- Try finding a server matching the request.
+    let requestHead = WS.pendingRequest pend
+    case msum $ map (matchWebSocket requestHead) endPoints of
+        Just theMatch -> do
+            let server  = wsServer $ endPointWs theMatch
+                context = ServerContext
+                            { captureMap = captureWs theMatch
+                            , loggerSet  = logger
+                            , pendConn   = pend
+                            , conn       = Nothing
+                            }
+            runServer server context
+
+        -- No server is found. Log error and reject request.
+        Nothing       -> do
+            let msg = printf "No server found for: %s"
+                             (BS.unpack $ WS.requestPath requestHead)
+            logWithLevel logger Error msg
+            WS.rejectRequest pend "No server found"
 
 -- | Callback action that is invoked for each HTTP request.
 httpService :: LoggerSet -> HiveConfig -> [HttpEndPoint] -> Application
@@ -143,7 +190,6 @@ httpService logger config endPoints req respReceived = do
     -- Return control back to Wai.
     respReceived resp
     where
-
       -- Find and execute a matching handler.
       findAndExecHandler :: IO Response
       findAndExecHandler =
@@ -158,7 +204,7 @@ httpService logger config endPoints req respReceived = do
                                 }
 
                 -- Try run the handler. It may generate exception though.
-                HandlerResponse response <- 
+                HandlerResponse response <-
                     runHandler handler context `catch` exceptions context
 
                 return response
