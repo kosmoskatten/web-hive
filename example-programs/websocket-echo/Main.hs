@@ -6,6 +6,8 @@ module Main
 import Control.Monad (forever)
 import Network.Hive
 
+import qualified Data.ByteString.Lazy.Char8 as LBS
+
 main :: IO ()
 main =
     hive defaultHiveConfig $ do
@@ -24,8 +26,13 @@ echoServer = do
     forever $ do
         msg <- receiveDataMessage
         case msg of
-            Binary bMsg -> sendBinaryMessage bMsg
-            Text   tMsg -> sendTextMessage tMsg
+            Binary bMsg -> do
+              logInfoM $ "Got binary: " `mappend` LBS.unpack bMsg
+              sendBinaryMessage bMsg
+
+            Text   tMsg -> do
+              logInfoM $ "Got text: " `mappend` LBS.unpack tMsg
+              sendTextMessage tMsg
 
 siteDir :: FilePath
 siteDir = "example-programs/websocket-echo/site"

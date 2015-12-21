@@ -51,6 +51,10 @@ module Network.Hive
 
     -- Re-export of stuff from Logger.
     , LoggerStream (..)
+    , LogBearer (..)
+    , logInfoM
+    , logWarningM
+    , logErrorM
     ) where
 
 import Control.Exception (Exception, SomeException, catch)
@@ -97,9 +101,13 @@ import Network.Hive.Handler ( Handler
                             )
 import Network.Hive.Logger ( LoggerStream (..)
                            , LogLevel (..)
+                           , LogBearer (..)
                            , LoggerSet
                            , createLogger
                            , logWithLevel
+                           , logInfoM
+                           , logWarningM
+                           , logErrorM
                            )
 import Network.Hive.Matcher ( HttpMatch (..)
                             , WsMatch (..)

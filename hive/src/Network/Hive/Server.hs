@@ -12,9 +12,6 @@ module Network.Hive.Server
     , receiveDataMessage
     , sendBinaryMessage
     , sendTextMessage
-    , logInfo
-    , logWarning
-    , logError
     ) where
 
 import Control.Monad.State.Strict ( StateT
@@ -27,8 +24,8 @@ import Control.Monad.State.Strict ( StateT
                                   )
 import Data.ByteString (ByteString)
 import Network.Hive.Logger ( LoggerSet
-                           , LogLevel (..)
-                           , logWithLevel
+                           , LogBearer (..)
+                           , logErrorM
                            )
 import Network.Hive.Types (CaptureMap)
 import Network.WebSockets ( Connection
@@ -46,6 +43,9 @@ data ServerContext
        , pendConn   :: !PendingConnection
        , conn       :: !(Maybe Connection)
        }
+
+instance LogBearer ServerContext where
+    getLoggerSet = loggerSet
 
 -- | The Server monad, in which server actions are performed.
 newtype Server a =
@@ -79,7 +79,7 @@ receiveDataMessage = do
           liftIO $ WS.receiveDataMessage theConn
         Nothing      -> do
           -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at receiveDataMessage"
+          logErrorM "No valid WebSocket connection at receiveDataMessage"
           return $ Binary LBS.empty
 
 -- | Send a binary message.
@@ -91,7 +91,7 @@ sendBinaryMessage message = do
           liftIO $ WS.sendBinaryData theConn message
         Nothing      ->
           -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at sendBinaryMessage"
+          logErrorM "No valid WebSocket connection at sendBinaryMessage"
 
 -- | Send a text message.
 sendTextMessage :: LBS.ByteString -> Server ()
@@ -102,22 +102,5 @@ sendTextMessage message = do
           liftIO $ WS.sendTextData theConn message
         Nothing      ->
           -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at sendBinaryMessage"
-
--- | Log a string on the Info level.
-logInfo :: String -> Server ()
-logInfo = logIt Info
-
--- | Log a string on the Warning level.
-logWarning :: String -> Server ()
-logWarning = logIt Warning
-
--- | Log a string on the Error level.
-logError :: String -> Server ()
-logError = logIt Error
-
-logIt :: LogLevel -> String -> Server ()
-logIt level str = do
-    logger <- loggerSet <$> get
-    liftIO $ logWithLevel logger level str
+          logErrorM "No valid WebSocket connection at sendBinaryMessage"
 

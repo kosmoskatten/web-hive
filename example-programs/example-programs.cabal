@@ -56,6 +56,7 @@ executable websocket-echo
   main-is:            Main.hs
   build-depends:      base >=4.8 && <4.9
                     , aeson
+                    , bytestring
                     , hive
   hs-source-dirs:     websocket-echo
   default-language:   Haskell2010
