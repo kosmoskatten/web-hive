@@ -17,6 +17,7 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Network.Hive
+                       Network.Hive.ConnectedServer
                        Network.Hive.EndPoint
                        Network.Hive.Handler
                        Network.Hive.Logger

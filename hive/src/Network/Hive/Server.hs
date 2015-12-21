@@ -5,102 +5,66 @@
 module Network.Hive.Server
     ( Server
     , ServerContext (..)
-    , DataMessage (..)
     , runServer
     , acceptRequest
     , rejectRequest
-    , receiveDataMessage
-    , sendBinaryMessage
-    , sendTextMessage
     ) where
 
-import Control.Monad.State.Strict ( StateT
-                                  , MonadState
-                                  , MonadIO
-                                  , evalStateT
-                                  , get
-                                  , put
-                                  , liftIO
-                                  )
+import Control.Monad.State( StateT
+                          , MonadState
+                          , MonadIO
+                          , evalStateT
+                          , get
+                          , liftIO
+                          )
 import Data.ByteString (ByteString)
+import Network.Hive.ConnectedServer ( ConnectedServer
+                                    , ConnectedServerContext (..)
+                                    , runConnectedServer
+                                    )
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
-                           , logError
                            )
 import Network.Hive.Types (CaptureMap)
-import Network.WebSockets ( Connection
-                          , DataMessage (..)
-                          , PendingConnection
-                          )
+import Network.WebSockets (PendingConnection)
 
-import qualified Data.ByteString.Lazy as LBS
 import qualified Network.WebSockets as WS
 
+-- | The runtime context for a (pending) server.
 data ServerContext
     = ServerContext
        { captureMap :: !CaptureMap
        , loggerSet  :: !LoggerSet
        , pendConn   :: !PendingConnection
-       , conn       :: !(Maybe Connection)
        }
 
+-- | LogBearer instance for ServerContext.
 instance LogBearer ServerContext where
     getLoggerSet = loggerSet
 
 -- | The Server monad, in which server actions are performed.
-newtype Server a =
-    Server { extrState :: StateT ServerContext IO a}
-    deriving (Applicative, Functor, Monad
-             , MonadState ServerContext, MonadIO)
+newtype Server a
+    = Server { extrState :: StateT ServerContext IO a}
+    deriving ( Applicative, Functor, Monad
+             , MonadState ServerContext, MonadIO )
 
 -- | Invoke a server.
 runServer :: Server a -> ServerContext -> IO a
 runServer action = evalStateT (extrState action)
 
--- | Accept a pending request.
-acceptRequest :: Server ()
-acceptRequest = do
-    state   <- get
-    newConn <- liftIO $ WS.acceptRequest (pendConn state)
-    put $ state { conn = Just newConn }
+-- | Accept a pending request and transfer in to the connected state.
+acceptRequest :: ConnectedServer () -> Server ()
+acceptRequest action = do
+    state <- get
+    conn  <- liftIO $ WS.acceptRequest (pendConn state)
+    let context = ConnectedServerContext
+                    { loggerSet'  = loggerSet state
+                    , connection  = conn
+                    }
+    liftIO $ runConnectedServer action context
 
 -- | Reject a pending request.
 rejectRequest :: ByteString -> Server ()
 rejectRequest message = do
     state <- get
     liftIO $ WS.rejectRequest (pendConn state) message
-
--- | Receive some data as a DataMessage
-receiveDataMessage :: Server DataMessage
-receiveDataMessage = do
-    state <- get
-    case conn state of
-        Just theConn ->
-          liftIO $ WS.receiveDataMessage theConn
-        Nothing      -> do
-          -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at receiveDataMessage"
-          return $ Binary LBS.empty
-
--- | Send a binary message.
-sendBinaryMessage :: LBS.ByteString -> Server ()
-sendBinaryMessage message = do
-    state <- get
-    case conn state of
-        Just theConn ->
-          liftIO $ WS.sendBinaryData theConn message
-        Nothing      ->
-          -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at sendBinaryMessage"
-
--- | Send a text message.
-sendTextMessage :: LBS.ByteString -> Server ()
-sendTextMessage message = do
-    state <- get
-    case conn state of
-        Just theConn ->
-          liftIO $ WS.sendTextData theConn message
-        Nothing      ->
-          -- TODO: This should really be changed to exception handling.
-          logError "No valid WebSocket connection at sendBinaryMessage"
-

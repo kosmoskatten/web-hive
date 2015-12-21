@@ -39,9 +39,12 @@ module Network.Hive
 
     -- Re-export of stuff from Server.
     , Server
-    , DataMessage (..)
     , acceptRequest
     , rejectRequest
+
+    -- Re-export of stuff from ConnectedServer.
+    , ConnectedServer
+    , DataMessage (..)
     , receiveDataMessage
     , sendBinaryMessage
     , sendTextMessage
@@ -57,6 +60,12 @@ module Network.Hive
 import Control.Exception (Exception, SomeException, catch)
 import Control.Monad (msum)
 import Data.Time (NominalDiffTime, getCurrentTime, diffUTCTime)
+import Network.Hive.ConnectedServer ( ConnectedServer
+                                    , DataMessage (..)
+                                    , receiveDataMessage
+                                    , sendBinaryMessage
+                                    , sendTextMessage
+                                    )
 import Network.Hive.EndPoint ( Hive
                              , Guard (..)
                              , HttpEndPoint (..)
@@ -110,13 +119,9 @@ import Network.Hive.Matcher ( HttpMatch (..)
                             )
 import Network.Hive.Server ( Server
                            , ServerContext (..)
-                           , DataMessage (..)
                            , runServer
                            , acceptRequest
                            , rejectRequest
-                           , receiveDataMessage
-                           , sendBinaryMessage
-                           , sendTextMessage
                            )
 import Network.HTTP.Types
 import Network.Wai
@@ -168,7 +173,6 @@ webSocketService logger endPoints pend = do
                             { captureMap = captureWs theMatch
                             , loggerSet  = logger
                             , pendConn   = pend
-                            , conn       = Nothing
                             }
             runServer server context
 
