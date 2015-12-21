@@ -48,6 +48,7 @@ module Network.Hive
     , receiveDataMessage
     , sendBinaryMessage
     , sendTextMessage
+    , forkPingThread
 
     -- Re-export of stuff from Logger.
     , LoggerStream (..)
@@ -65,6 +66,7 @@ import Network.Hive.ConnectedServer ( ConnectedServer
                                     , receiveDataMessage
                                     , sendBinaryMessage
                                     , sendTextMessage
+                                    , forkPingThread
                                     )
 import Network.Hive.EndPoint ( Hive
                              , Guard (..)

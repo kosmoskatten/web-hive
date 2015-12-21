@@ -10,6 +10,7 @@ module Network.Hive.ConnectedServer
     , receiveDataMessage
     , sendBinaryMessage
     , sendTextMessage
+    , forkPingThread
     ) where
 
 import Control.Monad.State ( StateT
@@ -67,3 +68,10 @@ sendTextMessage :: ByteString -> ConnectedServer ()
 sendTextMessage message = do
     conn <- connection <$> get
     liftIO $ WS.sendTextData conn message
+
+-- | Utility function to fork a thread to send ping messages every
+-- n second.
+forkPingThread :: Int -> ConnectedServer ()
+forkPingThread interval = do
+    conn <- connection <$> get
+    liftIO $ WS.forkPingThread conn interval

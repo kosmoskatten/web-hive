@@ -28,7 +28,9 @@ echoServer = acceptRequest connectedServer
 
 -- | Connected state part of the WebSocket service.
 connectedServer :: ConnectedServer ()
-connectedServer =
+connectedServer = do
+    -- Keep the connection alive by continously pinging.
+    forkPingThread 15
     forever $ do
         msg <- receiveDataMessage
         case msg of
