@@ -27,11 +27,11 @@ echoServer = do
         msg <- receiveDataMessage
         case msg of
             Binary bMsg -> do
-              logInfoM $ "Got binary: " `mappend` LBS.unpack bMsg
+              logInfo $ "Got binary: " `mappend` LBS.unpack bMsg
               sendBinaryMessage bMsg
 
             Text   tMsg -> do
-              logInfoM $ "Got text: " `mappend` LBS.unpack tMsg
+              logInfo $ "Got text: " `mappend` LBS.unpack tMsg
               sendTextMessage tMsg
 
 siteDir :: FilePath

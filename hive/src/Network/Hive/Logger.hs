@@ -6,9 +6,9 @@ module Network.Hive.Logger
     , LoggerSet
     , createLogger
     , logWithLevel
-    , logInfoM
-    , logWarningM
-    , logErrorM
+    , logInfo
+    , logWarning
+    , logError
     ) where
 
 import Control.Monad.State ( MonadState
@@ -63,20 +63,20 @@ logWithLevel loggerSet logLevel msg = do
     pushLogStrLn loggerSet logStr
 
 -- | Push an Info log.
-logInfoM :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
-logInfoM str = do
-    loggerSet <- getLoggerSet <$> get
-    liftIO $ logWithLevel loggerSet Info str
+logInfo :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logInfo = logIt Info
 
 -- | Push a Warning log.
-logWarningM :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
-logWarningM str = do
-    loggerSet <- getLoggerSet <$> get
-    liftIO $ logWithLevel loggerSet Warning str
+logWarning :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logWarning = logIt Warning
 
 -- | Push an Error log.
-logErrorM :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
-logErrorM str = do
+logError :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logError = logIt Error
+
+logIt :: (LogBearer a, MonadIO m, MonadState a m) =>
+         LogLevel -> String -> m ()
+logIt level str = do
     loggerSet <- getLoggerSet <$> get
-    liftIO $ logWithLevel loggerSet Error str
+    liftIO $ logWithLevel loggerSet level str
 

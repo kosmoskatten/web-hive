@@ -25,7 +25,7 @@ import Control.Monad.State.Strict ( StateT
 import Data.ByteString (ByteString)
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
-                           , logErrorM
+                           , logError
                            )
 import Network.Hive.Types (CaptureMap)
 import Network.WebSockets ( Connection
@@ -79,7 +79,7 @@ receiveDataMessage = do
           liftIO $ WS.receiveDataMessage theConn
         Nothing      -> do
           -- TODO: This should really be changed to exception handling.
-          logErrorM "No valid WebSocket connection at receiveDataMessage"
+          logError "No valid WebSocket connection at receiveDataMessage"
           return $ Binary LBS.empty
 
 -- | Send a binary message.
@@ -91,7 +91,7 @@ sendBinaryMessage message = do
           liftIO $ WS.sendBinaryData theConn message
         Nothing      ->
           -- TODO: This should really be changed to exception handling.
-          logErrorM "No valid WebSocket connection at sendBinaryMessage"
+          logError "No valid WebSocket connection at sendBinaryMessage"
 
 -- | Send a text message.
 sendTextMessage :: LBS.ByteString -> Server ()
@@ -102,5 +102,5 @@ sendTextMessage message = do
           liftIO $ WS.sendTextData theConn message
         Nothing      ->
           -- TODO: This should really be changed to exception handling.
-          logErrorM "No valid WebSocket connection at sendBinaryMessage"
+          logError "No valid WebSocket connection at sendBinaryMessage"
 

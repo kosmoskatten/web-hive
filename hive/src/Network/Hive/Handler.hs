@@ -20,28 +20,25 @@ module Network.Hive.Handler
     , serveDirectory
     , queryValue
     , queryValues
-    , logInfo
-    , logWarning
-    , logError
     , liftIO
     ) where
 
 import Control.Exception (Exception (..))
-import Control.Monad.Reader ( ReaderT
-                            , MonadReader
-                            , MonadIO
-                            , ask
-                            , runReaderT
-                            , liftIO
-                            )
+import Control.Monad.State ( StateT
+                           , MonadState
+                           , MonadIO
+                           , get
+                           , evalStateT
+                           , liftIO
+                           )
 import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
 import Network.Hive.Logger ( LoggerSet
-                           , LogLevel (..)
-                           , logWithLevel
+                           , LogBearer (..)
+                           , logError
                            )
 import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types ( Status
@@ -79,21 +76,25 @@ data StatusCode
     deriving Show
 
 -- | The context data for a running Handler.
-data Context 
+data Context
     = Context
         { captureMap :: !CaptureMap
         , request    :: !Request
         , loggerSet  :: !LoggerSet
         }
 
+-- | Context instance bearer for LogBearer.
+instance LogBearer Context where
+    getLoggerSet = loggerSet
+
 -- | The Handler monad, in which handler actions are performed.
-newtype Handler a = 
-    Handler { extrReader :: ReaderT Context IO a}
-    deriving (Applicative, Functor, Monad, MonadReader Context, MonadIO)
+newtype Handler a =
+    Handler { extrState :: StateT Context IO a}
+    deriving (Applicative, Functor, Monad, MonadState Context, MonadIO)
 
 -- | Invoke a handler.
 runHandler :: Handler a -> Context -> IO a
-runHandler action = runReaderT (extrReader action)
+runHandler action = evalStateT (extrState action)
 
 -- | The default error handler. Just write the received exception on the
 -- error log and respond with code 500 and the exception as body.
@@ -109,14 +110,14 @@ defaultErrorHandler excp = do
 -- to decode to the requested object.
 bodyJSON :: FromJSON a => Handler a
 bodyJSON = do
-    req  <- request <$> ask
+    req  <- request <$> get
     body <- liftIO $ lazyRequestBody req
     return (fromJust $ decode body)
 
 -- | Get the value of a capture. Will throw exception if capture is not
 -- present.
 capture :: Text -> Handler Text
-capture text = fromJust . Map.lookup text . captureMap <$> ask
+capture text = fromJust . Map.lookup text . captureMap <$> get
 
 -- | Redirect using HTTP response code 301 to the specified path.
 redirectTo :: ByteString -> Handler HandlerResponse
@@ -138,7 +139,7 @@ respondFile file = do
     let response = responseFile status200 [] file Nothing
     respondWith response
 
--- | Respond with a JSON data structure. The response is marked as content 
+-- | Respond with a JSON data structure. The response is marked as content
 -- type "application/json".
 respondJSON :: ToJSON a => StatusCode -> a -> Handler HandlerResponse
 respondJSON !sc !obj = do
@@ -147,13 +148,13 @@ respondJSON !sc !obj = do
         response   = responseLBS statusCode headers $ encode obj
     respondWith response
 
--- | Respond UTF-8 encoded text. The response is marked as content 
+-- | Respond UTF-8 encoded text. The response is marked as content
 -- type "text/plain".
 respondText :: StatusCode -> Text -> Handler HandlerResponse
 respondText !sc !text = do
     let headers    = [(hContentType, "text/plain")]
         statusCode = toStatus sc
-        response   = responseBuilder statusCode headers $ 
+        response   = responseBuilder statusCode headers $
                                      encodeUtf8Builder text
     respondWith response
 
@@ -163,35 +164,18 @@ respondText !sc !text = do
 -- this function is by Wai's responseFile function.
 serveDirectory :: FilePath -> Handler HandlerResponse
 serveDirectory directory = do
-    requestPath <- BS.unpack . rawPathInfo . request <$> ask
+    requestPath <- BS.unpack . rawPathInfo . request <$> get
     let fullPath = directory `mappend` "/" `mappend` requestPath
         response = responseFile status200 [] fullPath Nothing
     respondWith response
-                                
+
 -- | Fetch the first - if any - query value for the given key.
 queryValue :: Text -> Handler (Maybe Text)
-queryValue key = QL.queryValue key . queryString . request <$> ask
+queryValue key = QL.queryValue key . queryString . request <$> get
 
 -- | Fetch all - if any - qery values for the given key.
 queryValues :: Text -> Handler [Text]
-queryValues key = QL.queryValues key . queryString . request <$> ask
-
--- | Log a string on the Info level.
-logInfo :: String -> Handler ()
-logInfo = logIt Info
-
--- | Log a string on the Warning level.
-logWarning :: String -> Handler ()
-logWarning = logIt Warning
-
--- | Log a string on the Error level.
-logError :: String -> Handler ()
-logError = logIt Error
-
-logIt :: LogLevel -> String -> Handler ()
-logIt level str = do
-    logger <- loggerSet <$> ask
-    liftIO $ logWithLevel logger level str
+queryValues key = QL.queryValues key . queryString . request <$> get
 
 toStatus :: StatusCode -> Status
 toStatus Ok               = status200

@@ -35,9 +35,6 @@ module Network.Hive
     , serveDirectory
     , queryValue
     , queryValues
-    , logInfo
-    , logWarning
-    , logError
     , liftIO
 
     -- Re-export of stuff from Server.
@@ -52,9 +49,9 @@ module Network.Hive
     -- Re-export of stuff from Logger.
     , LoggerStream (..)
     , LogBearer (..)
-    , logInfoM
-    , logWarningM
-    , logErrorM
+    , logInfo
+    , logWarning
+    , logError
     ) where
 
 import Control.Exception (Exception, SomeException, catch)
@@ -94,9 +91,6 @@ import Network.Hive.Handler ( Handler
                             , serveDirectory
                             , queryValue
                             , queryValues
-                            , logInfo
-                            , logWarning
-                            , logError
                             , liftIO
                             )
 import Network.Hive.Logger ( LoggerStream (..)
@@ -105,9 +99,9 @@ import Network.Hive.Logger ( LoggerStream (..)
                            , LoggerSet
                            , createLogger
                            , logWithLevel
-                           , logInfoM
-                           , logWarningM
-                           , logErrorM
+                           , logInfo
+                           , logWarning
+                           , logError
                            )
 import Network.Hive.Matcher ( HttpMatch (..)
                             , WsMatch (..)
