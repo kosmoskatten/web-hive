@@ -17,6 +17,7 @@ module Network.Hive
     , (</:>)
     , (<!>)
     , (==>)
+    , (~~>)
     , guardedBy
     , match
     , matchAll
@@ -79,6 +80,7 @@ import Network.Hive.EndPoint ( Hive
                              , (</:>)
                              , (<!>)
                              , (==>)
+                             , (~~>)
                              , guardedBy
                              , match
                              , matchAll

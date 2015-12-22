@@ -35,6 +35,7 @@ module Network.Hive.EndPoint
     , handledBy
     , (==>)
     , servedBy
+    , (~~>)
 
     -- Default method for the default route.
     , methodMatchAll
@@ -218,6 +219,10 @@ servedBy (WsRoute p) server =
                   , wsServer = server
                   }
       ]
+
+-- | Operator alias to servedBy.
+(~~>) :: WsRoute -> Server () -> Hive ()
+(~~>) = servedBy
 
 -- | A "magic" http method for implementing catch all matches.
 methodMatchAll :: Method

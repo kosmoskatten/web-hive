@@ -19,7 +19,7 @@ main =
         matchAll ==> serveDirectory siteDir
 
         -- An echo WebSocket server.
-        webSocket </> "echo" `servedBy` echoServer
+        webSocket </> "echo" ~~> echoServer
 
 -- | Entry to the WebSocket server is in pending state. Once accept request
 -- is made the state transfer to connected state.
