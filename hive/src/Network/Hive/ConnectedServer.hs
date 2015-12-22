@@ -13,13 +13,13 @@ module Network.Hive.ConnectedServer
     , forkPingThread
     ) where
 
-import Control.Monad.State ( StateT
-                           , MonadState
-                           , MonadIO
-                           , evalStateT
-                           , get
-                           , liftIO
-                           )
+import Control.Monad.Reader ( ReaderT
+                            , MonadReader
+                            , MonadIO
+                            , runReaderT
+                            , ask
+                            , liftIO
+                            )
 import Data.ByteString.Lazy (ByteString)
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
@@ -43,35 +43,35 @@ instance LogBearer ConnectedServerContext where
 
 -- | The ConnectedServer monad.
 newtype ConnectedServer a
-    = ConnectedServer { extrState :: StateT ConnectedServerContext IO a }
+    = ConnectedServer { extrReader :: ReaderT ConnectedServerContext IO a }
     deriving ( Functor, Applicative, Monad
-             , MonadState ConnectedServerContext, MonadIO )
+             , MonadReader ConnectedServerContext, MonadIO )
 
 -- | Invoke a connected server.
 runConnectedServer :: ConnectedServer a -> ConnectedServerContext -> IO a
-runConnectedServer action = evalStateT (extrState action)
+runConnectedServer action = runReaderT (extrReader action)
 
 -- | Receive some data as a DataMessage
 receiveDataMessage :: ConnectedServer DataMessage
 receiveDataMessage = do
-    conn <- connection <$> get
+    conn <- connection <$> ask
     liftIO $ WS.receiveDataMessage conn
 
 -- | Send a binary message.
 sendBinaryMessage :: ByteString -> ConnectedServer ()
 sendBinaryMessage message = do
-    conn <- connection <$> get
+    conn <- connection <$> ask
     liftIO $ WS.sendBinaryData conn message
 
 -- | Send a text message.
 sendTextMessage :: ByteString -> ConnectedServer ()
 sendTextMessage message = do
-    conn <- connection <$> get
+    conn <- connection <$> ask
     liftIO $ WS.sendTextData conn message
 
 -- | Utility function to fork a thread to send ping messages every
 -- n second.
 forkPingThread :: Int -> ConnectedServer ()
 forkPingThread interval = do
-    conn <- connection <$> get
+    conn <- connection <$> ask
     liftIO $ WS.forkPingThread conn interval

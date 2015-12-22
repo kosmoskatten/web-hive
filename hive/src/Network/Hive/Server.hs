@@ -10,11 +10,11 @@ module Network.Hive.Server
     , rejectRequest
     ) where
 
-import Control.Monad.State( StateT
-                          , MonadState
+import Control.Monad.Reader ( ReaderT
+                          , MonadReader
                           , MonadIO
-                          , evalStateT
-                          , get
+                          , runReaderT
+                          , ask
                           , liftIO
                           )
 import Data.ByteString (ByteString)
@@ -44,18 +44,18 @@ instance LogBearer ServerContext where
 
 -- | The Server monad, in which server actions are performed.
 newtype Server a
-    = Server { extrState :: StateT ServerContext IO a}
+    = Server { extrReader :: ReaderT ServerContext IO a}
     deriving ( Applicative, Functor, Monad
-             , MonadState ServerContext, MonadIO )
+             , MonadReader ServerContext, MonadIO )
 
 -- | Invoke a server.
 runServer :: Server a -> ServerContext -> IO a
-runServer action = evalStateT (extrState action)
+runServer action = runReaderT (extrReader action)
 
 -- | Accept a pending request and transfer in to the connected state.
 acceptRequest :: ConnectedServer () -> Server ()
 acceptRequest action = do
-    state <- get
+    state <- ask
     conn  <- liftIO $ WS.acceptRequest (pendConn state)
     let context = ConnectedServerContext
                     { loggerSet'  = loggerSet state
@@ -66,5 +66,5 @@ acceptRequest action = do
 -- | Reject a pending request.
 rejectRequest :: ByteString -> Server ()
 rejectRequest message = do
-    state <- get
+    state <- ask
     liftIO $ WS.rejectRequest (pendConn state) message

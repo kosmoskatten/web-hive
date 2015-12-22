@@ -11,11 +11,11 @@ module Network.Hive.Logger
     , logError
     ) where
 
-import Control.Monad.State ( MonadState
-                           , MonadIO
-                           , get
-                           , liftIO
-                           )
+import Control.Monad.Reader ( MonadReader
+                            , MonadIO
+                            , ask
+                            , liftIO
+                            )
 import Data.Monoid ((<>))
 import Data.Time (getZonedTime)
 import System.Log.FastLogger ( LoggerSet
@@ -41,7 +41,7 @@ data LogLevel
     | Error
     deriving Show
 
--- | Typeclass for MonadState states having a LoggerSet. Needed for the
+-- | Typeclass for MonadReader states having a LoggerSet. Needed for the
 -- common implementation of logger functions.
 class LogBearer a where
     getLoggerSet :: a -> LoggerSet
@@ -63,20 +63,20 @@ logWithLevel loggerSet logLevel msg = do
     pushLogStrLn loggerSet logStr
 
 -- | Push an Info log.
-logInfo :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logInfo :: (LogBearer a, MonadIO m, MonadReader a m) => String -> m ()
 logInfo = logIt Info
 
 -- | Push a Warning log.
-logWarning :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logWarning :: (LogBearer a, MonadIO m, MonadReader a m) => String -> m ()
 logWarning = logIt Warning
 
 -- | Push an Error log.
-logError :: (LogBearer a, MonadIO m, MonadState a m) => String -> m ()
+logError :: (LogBearer a, MonadIO m, MonadReader a m) => String -> m ()
 logError = logIt Error
 
-logIt :: (LogBearer a, MonadIO m, MonadState a m) =>
+logIt :: (LogBearer a, MonadIO m, MonadReader a m) =>
          LogLevel -> String -> m ()
 logIt level str = do
-    loggerSet <- getLoggerSet <$> get
+    loggerSet <- getLoggerSet <$> ask
     liftIO $ logWithLevel loggerSet level str
 

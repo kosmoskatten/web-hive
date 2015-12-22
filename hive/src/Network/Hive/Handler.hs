@@ -24,13 +24,13 @@ module Network.Hive.Handler
     ) where
 
 import Control.Exception (Exception (..))
-import Control.Monad.State ( StateT
-                           , MonadState
-                           , MonadIO
-                           , get
-                           , evalStateT
-                           , liftIO
-                           )
+import Control.Monad.Reader ( ReaderT
+                            , MonadReader
+                            , MonadIO
+                            , ask
+                            , runReaderT
+                            , liftIO
+                            )
 import Data.Aeson (FromJSON, ToJSON, decode, encode)
 import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
@@ -89,12 +89,12 @@ instance LogBearer Context where
 
 -- | The Handler monad, in which handler actions are performed.
 newtype Handler a =
-    Handler { extrState :: StateT Context IO a}
-    deriving (Applicative, Functor, Monad, MonadState Context, MonadIO)
+    Handler { extrReader :: ReaderT Context IO a}
+    deriving (Applicative, Functor, Monad, MonadReader Context, MonadIO)
 
 -- | Invoke a handler.
 runHandler :: Handler a -> Context -> IO a
-runHandler action = evalStateT (extrState action)
+runHandler action = runReaderT (extrReader action)
 
 -- | The default error handler. Just write the received exception on the
 -- error log and respond with code 500 and the exception as body.
@@ -110,14 +110,14 @@ defaultErrorHandler excp = do
 -- to decode to the requested object.
 bodyJSON :: FromJSON a => Handler a
 bodyJSON = do
-    req  <- request <$> get
+    req  <- request <$> ask
     body <- liftIO $ lazyRequestBody req
     return (fromJust $ decode body)
 
 -- | Get the value of a capture. Will throw exception if capture is not
 -- present.
 capture :: Text -> Handler Text
-capture text = fromJust . Map.lookup text . captureMap <$> get
+capture text = fromJust . Map.lookup text . captureMap <$> ask
 
 -- | Redirect using HTTP response code 301 to the specified path.
 redirectTo :: ByteString -> Handler HandlerResponse
@@ -164,18 +164,18 @@ respondText !sc !text = do
 -- this function is by Wai's responseFile function.
 serveDirectory :: FilePath -> Handler HandlerResponse
 serveDirectory directory = do
-    requestPath <- BS.unpack . rawPathInfo . request <$> get
+    requestPath <- BS.unpack . rawPathInfo . request <$> ask
     let fullPath = directory `mappend` "/" `mappend` requestPath
         response = responseFile status200 [] fullPath Nothing
     respondWith response
 
 -- | Fetch the first - if any - query value for the given key.
 queryValue :: Text -> Handler (Maybe Text)
-queryValue key = QL.queryValue key . queryString . request <$> get
+queryValue key = QL.queryValue key . queryString . request <$> ask
 
 -- | Fetch all - if any - qery values for the given key.
 queryValues :: Text -> Handler [Text]
-queryValues key = QL.queryValues key . queryString . request <$> get
+queryValues key = QL.queryValues key . queryString . request <$> ask
 
 toStatus :: StatusCode -> Status
 toStatus Ok               = status200
