@@ -1,4 +1,4 @@
-module Main 
+module Main
     ( main
     ) where
 
@@ -14,7 +14,7 @@ main = defaultMain testSuite
 
 testSuite :: [Test]
 testSuite =
-    [ testGroup "Hive Test"
+    [ testGroup "Hive HTTP Tests"
         [ testCase "Test 500 if no endpoints" shallResp500Test
         , testCase "Test target routing" shallRouteTargetTest
         , testCase "Test capturing" shallCaptureTest
@@ -24,7 +24,10 @@ testSuite =
         , testCase "Test content type text" shallBeContentTypeTextTest
         , testCase "Test error handler" shallInvokeErrorHandlerTest
         , testCase "Test method diff" shallDifferentiateMethodsTest
-        ]    
+        ]
+    , testGroup "Hive WebSocket Tests"
+        [ testCase "Test target routing" shallRouteWsTargetTest
+        ]
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest
         , testCase "Test post" postTest

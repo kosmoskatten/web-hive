@@ -9,6 +9,9 @@ module HiveTests
     , shallBeContentTypeTextTest
     , shallInvokeErrorHandlerTest
     , shallDifferentiateMethodsTest
+
+    -- WebSocket specific tests
+    , shallRouteWsTargetTest
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -21,6 +24,8 @@ import Network.Hive ( Hive
                     , HiveConfig (..)
                     , StatusCode (..)
                     , (</>), (</:>)
+                    , (~~>)
+                    , acceptRequest
                     , guardedBy
                     , capture
                     , defaultHiveConfig
@@ -28,9 +33,13 @@ import Network.Hive ( Hive
                     , matchAll
                     , handledBy
                     , hive
+                    , receiveDataMessage
                     , respondText
+                    , sendTextMessage
+                    , servedBy
                     , queryValue
                     , queryValues
+                    , webSocket
                     )
 import Network.HTTP.Client (Response)
 import Network.HTTP.Types ( Status (..)
@@ -40,6 +49,7 @@ import Network.HTTP.Types ( Status (..)
                           , methodPost
                           , methodPut
                           )
+import Network.WebSockets (DataMessage (..))
 import Test.HUnit
 import Text.Printf
 
@@ -47,6 +57,7 @@ import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Text as T
 import qualified Network.HTTP.Client as C
+import qualified Network.WebSockets as WS
 
 -- | Access to a non-existing route shall result in a 500/Internal
 -- Server Error.
@@ -79,13 +90,13 @@ shallRouteTargetTest = do
     where
       theHive :: Hive ()
       theHive = do
-          match GET </> "hello" </> "world" 
+          match GET </> "hello" </> "world"
                     `guardedBy` None
                     `handledBy` respondText Ok "Hello, world!"
           match GET </> "deep" </> "purple"
                     `guardedBy` None
                     `handledBy` respondText Ok "Deep Purple"
-          match GET `guardedBy` None 
+          match GET `guardedBy` None
                     `handledBy` respondText Ok "I'm root!"
           matchAll  `handledBy` respondText Ok "default"
 
@@ -101,7 +112,7 @@ shallCaptureTest = do
     where
       theHive :: Hive ()
       theHive = do
-          match GET </:> "word" 
+          match GET </:> "word"
                     `guardedBy` None
                     `handledBy` do
                         word <- capture "word"
@@ -112,7 +123,7 @@ shallCaptureTest = do
                     `handledBy` do
                         name  <- capture "name"
                         fruit <- capture "fruit"
-                        respondText Ok $ 
+                        respondText Ok $
                             name `mappend` " want a " `mappend` fruit
 
 -- | Test access of a single query value.
@@ -168,7 +179,7 @@ shallBeContentTypeTextTest = do
     let thePort = basePort + 6
     withHive thePort theHive $ do
         (stat, resp) <- httpGet thePort "/"
-        (200, Just "text/plain") @=? 
+        (200, Just "text/plain") @=?
             (stat, contentType $ C.responseHeaders resp)
     where
       theHive :: Hive ()
@@ -217,6 +228,40 @@ shallDifferentiateMethodsTest = do
                     `guardedBy` None
                     `handledBy` respondText Created "PUT"
 
+-- | Shall correctly route to WebSocket targets.
+shallRouteWsTargetTest :: Assertion
+shallRouteWsTargetTest = do
+    let thePort = basePort + 9
+    withHive thePort theHive $ do
+        resp1 <-
+          WS.runClient "localhost" thePort "/echo" $ \conn -> do
+              WS.sendTextData conn ("hello" :: LBS.ByteString)
+              WS.receiveDataMessage conn
+
+        resp2 <-
+          WS.runClient "localhost" thePort "/echo/reversed" $ \conn -> do
+              WS.sendTextData conn ("hello" :: LBS.ByteString)
+              WS.receiveDataMessage conn
+
+        Text "hello" @=? resp1
+        Text "olleh" @=? resp2
+    where
+      theHive :: Hive ()
+      theHive = do
+          webSocket </> "echo" `servedBy` do
+            acceptRequest $ do
+              msg <- receiveDataMessage
+              case msg of
+                Text tMsg -> sendTextMessage tMsg
+                _         -> sendTextMessage "???"
+
+          webSocket </> "echo" </> "reversed" ~~> do
+            acceptRequest $ do
+              msg <- receiveDataMessage
+              case msg of
+                Text tMsg -> sendTextMessage $ LBS.reverse tMsg
+                _         -> sendTextMessage "???"
+
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
@@ -229,13 +274,13 @@ httpDelete :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpDelete p url = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
     let req' = req { C.method      = methodDelete
-                   , C.checkStatus = \_ _ _ -> Nothing 
+                   , C.checkStatus = \_ _ _ -> Nothing
                    }
     manager <- C.newManager C.defaultManagerSettings
     resp    <- C.httpLbs req' manager
     return (statusCode $ C.responseStatus resp, resp)
 
-httpPost :: Int -> String -> LBS.ByteString 
+httpPost :: Int -> String -> LBS.ByteString
          -> IO (Int, Response LBS.ByteString)
 httpPost p url body = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
@@ -247,7 +292,7 @@ httpPost p url body = do
     resp    <- C.httpLbs req' manager
     return (statusCode $ C.responseStatus resp, resp)
 
-httpPut :: Int -> String -> LBS.ByteString 
+httpPut :: Int -> String -> LBS.ByteString
         -> IO (Int, Response LBS.ByteString)
 httpPut p url body = do
     req     <- C.parseUrl $ printf "http://localhost:%d%s" p url
@@ -262,7 +307,7 @@ httpPut p url body = do
 -- | Run Hive in a separate thread. Cancel the Hive thread as soon as the
 -- testing actions has finished.
 withHive :: Int -> Hive () -> Assertion -> IO ()
-withHive port' hive' action = 
+withHive port' hive' action =
     bracket startHive cancel $ \_ -> threadDelay 100000 >> action
     where
       startHive :: IO (Async ())
