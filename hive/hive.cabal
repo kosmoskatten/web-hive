@@ -17,13 +17,13 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Network.Hive
+                       Network.Hive.CaptureMap
                        Network.Hive.ConnectedServer
                        Network.Hive.EndPoint
                        Network.Hive.Handler
                        Network.Hive.Logger
                        Network.Hive.Matcher
                        Network.Hive.Server
-                       Network.Hive.Types
                        Network.Hive.QueryLookup
   -- other-modules:       
   -- other-extensions:    

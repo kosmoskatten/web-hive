@@ -11,17 +11,19 @@ module Network.Hive.Matcher
 import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Text.Encoding (decodeUtf8)
+import Network.Hive.CaptureMap ( CaptureMap
+                               , empty
+                               , insert
+                               )
 import Network.Hive.EndPoint ( HttpEndPoint (..)
                              , WsEndPoint (..)
                              , Path (..)
                              , methodMatchAll
                              )
-import Network.Hive.Types (CaptureMap)
 import Network.Wai (Request (..))
 import Network.WebSockets (RequestHead, requestPath)
 
 import qualified Data.ByteString.Char8 as BS
-import qualified Data.Map.Lazy as Map
 
 -- | The result if a HTTP match is made.
 data HttpMatch
@@ -44,7 +46,7 @@ matchHttp request endPoint
     -- If the EndPoint's method is "MATCHALL" there's always a match.
     | httpMethod endPoint == methodMatchAll =
         Just HttpMatch
-               { captureHttp  = Map.empty
+               { captureHttp  = empty
                , endPointHttp = endPoint
                , requestHttp  = request
                }
@@ -77,7 +79,7 @@ matchWebSocket request endPoint =
 -- list. All non capture parts must match exactly and the lists must be of
 -- equal length. The capture are saved as key/value pairs in the CapturMap.
 matchRequestPath :: [Text] -> [Path] -> Maybe CaptureMap
-matchRequestPath = match Map.empty
+matchRequestPath = match empty
     where
       match :: CaptureMap -> [Text] -> [Path] -> Maybe CaptureMap
       match cm [] []                 = Just cm
@@ -86,7 +88,7 @@ matchRequestPath = match Map.empty
       match cm (t:ts) (Path p:ps)
         | t == p                     = match cm ts ps
         | otherwise                  = Nothing
-      match cm (t:ts) (Capture c:ps) = match (Map.insert c t cm) ts ps
+      match cm (t:ts) (Capture c:ps) = match (insert c t cm) ts ps
 
 -- | Split a raw ByteString request path to a list of Text path segments.
 splitPath :: ByteString -> [Text]

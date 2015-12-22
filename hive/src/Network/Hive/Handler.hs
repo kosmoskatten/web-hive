@@ -11,7 +11,6 @@ module Network.Hive.Handler
     , runHandler
     , defaultErrorHandler
     , bodyJSON
-    , capture
     , redirectTo
     , respondWith
     , respondFile
@@ -36,11 +35,11 @@ import Data.ByteString (ByteString)
 import Data.Maybe (fromJust)
 import Data.Text (Text)
 import Data.Text.Encoding (encodeUtf8Builder)
+import Network.Hive.CaptureMap (CaptureMap, CaptureBearer (..))
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
                            , logError
                            )
-import Network.Hive.Types (CaptureMap)
 import Network.HTTP.Types ( Status
                           , hContentType
                           , hLocation
@@ -60,7 +59,6 @@ import Network.Wai ( Response
 
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import qualified Data.Map.Lazy as Map
 import qualified Network.Hive.QueryLookup as QL
 
 -- | Response type for a handler. Just a thin wrapper on top of Wai's
@@ -83,9 +81,13 @@ data Context
         , loggerSet  :: !LoggerSet
         }
 
--- | Context instance bearer for LogBearer.
+-- | LogBearer instance for Context.
 instance LogBearer Context where
     getLoggerSet = loggerSet
+
+-- | CaptureBearer instance for Context.
+instance CaptureBearer Context where
+    getCaptureMap = captureMap
 
 -- | The Handler monad, in which handler actions are performed.
 newtype Handler a =
@@ -113,11 +115,6 @@ bodyJSON = do
     req  <- request <$> ask
     body <- liftIO $ lazyRequestBody req
     return (fromJust $ decode body)
-
--- | Get the value of a capture. Will throw exception if capture is not
--- present.
-capture :: Text -> Handler Text
-capture text = fromJust . Map.lookup text . captureMap <$> ask
 
 -- | Redirect using HTTP response code 301 to the specified path.
 redirectTo :: ByteString -> Handler HandlerResponse

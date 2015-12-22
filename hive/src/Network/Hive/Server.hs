@@ -18,6 +18,7 @@ import Control.Monad.Reader ( ReaderT
                           , liftIO
                           )
 import Data.ByteString (ByteString)
+import Network.Hive.CaptureMap (CaptureMap, CaptureBearer (..))
 import Network.Hive.ConnectedServer ( ConnectedServer
                                     , ConnectedServerContext (..)
                                     , runConnectedServer
@@ -25,7 +26,6 @@ import Network.Hive.ConnectedServer ( ConnectedServer
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
                            )
-import Network.Hive.Types (CaptureMap)
 import Network.WebSockets (PendingConnection)
 
 import qualified Network.WebSockets as WS
@@ -41,6 +41,10 @@ data ServerContext
 -- | LogBearer instance for ServerContext.
 instance LogBearer ServerContext where
     getLoggerSet = loggerSet
+
+-- | CaptureBearer instance for ServerContext.
+instance CaptureBearer ServerContext where
+    getCaptureMap = captureMap
 
 -- | The Server monad, in which server actions are performed.
 newtype Server a

@@ -6,6 +6,9 @@ module Network.Hive
     , hive
     , defaultHiveConfig
 
+    -- Re-export of stuff from CaptureMap.
+    , capture
+
     -- Re-export of stuff from EndPoint.
     , Hive
     , HttpMethod (..)
@@ -26,7 +29,6 @@ module Network.Hive
     , StatusCode (..)
     , HandlerResponse
     , bodyJSON
-    , capture
     , redirectTo
     , respondWith
     , respondFile
@@ -52,7 +54,6 @@ module Network.Hive
 
     -- Re-export of stuff from Logger.
     , LoggerStream (..)
-    , LogBearer (..)
     , logInfo
     , logWarning
     , logError
@@ -61,6 +62,7 @@ module Network.Hive
 import Control.Exception (Exception, SomeException, catch)
 import Control.Monad (msum)
 import Data.Time (NominalDiffTime, getCurrentTime, diffUTCTime)
+import Network.Hive.CaptureMap (capture)
 import Network.Hive.ConnectedServer ( ConnectedServer
                                     , DataMessage (..)
                                     , receiveDataMessage
@@ -93,7 +95,6 @@ import Network.Hive.Handler ( Handler
                             , runHandler
                             , defaultErrorHandler
                             , bodyJSON
-                            , capture
                             , redirectTo
                             , respondWith
                             , respondFile
@@ -106,7 +107,6 @@ import Network.Hive.Handler ( Handler
                             )
 import Network.Hive.Logger ( LoggerStream (..)
                            , LogLevel (..)
-                           , LogBearer (..)
                            , LoggerSet
                            , createLogger
                            , logWithLevel
