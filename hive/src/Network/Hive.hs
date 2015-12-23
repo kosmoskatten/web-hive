@@ -48,6 +48,7 @@ module Network.Hive
     -- Re-export of stuff from ConnectedServer.
     , ConnectedServer
     , DataMessage (..)
+    , WebSocketsData
     , receiveDataMessage
     , sendBinaryMessage
     , sendTextMessage
@@ -66,6 +67,7 @@ import Data.Time (NominalDiffTime, getCurrentTime, diffUTCTime)
 import Network.Hive.CaptureMap (capture)
 import Network.Hive.ConnectedServer ( ConnectedServer
                                     , DataMessage (..)
+                                    , WebSocketsData
                                     , receiveDataMessage
                                     , sendBinaryMessage
                                     , sendTextMessage

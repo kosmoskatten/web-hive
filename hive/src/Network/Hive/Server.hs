@@ -62,7 +62,8 @@ acceptRequest action = do
     state <- ask
     conn  <- liftIO $ WS.acceptRequest (pendConn state)
     let context = ConnectedServerContext
-                    { loggerSet'  = loggerSet state
+                    { captureMap' = captureMap state
+                    , loggerSet'  = loggerSet state
                     , connection  = conn
                     }
     liftIO $ runConnectedServer action context

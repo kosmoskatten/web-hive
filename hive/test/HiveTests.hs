@@ -12,6 +12,7 @@ module HiveTests
 
     -- WebSocket specific tests
     , shallRouteWsTargetTest
+    , shallCaptureWsTest
     ) where
 
 import Control.Concurrent (threadDelay)
@@ -253,14 +254,37 @@ shallRouteWsTargetTest = do
               msg <- receiveDataMessage
               case msg of
                 Text tMsg -> sendTextMessage tMsg
-                _         -> sendTextMessage "???"
+                _         -> sendTextMessage ("???" :: LBS.ByteString)
 
           webSocket </> "echo" </> "reversed" ~~> do
             acceptRequest $ do
               msg <- receiveDataMessage
               case msg of
                 Text tMsg -> sendTextMessage $ LBS.reverse tMsg
-                _         -> sendTextMessage "???"
+                _         -> sendTextMessage ("???" :: LBS.ByteString)
+
+-- | WebSocket server shall capture correctly
+shallCaptureWsTest :: Assertion
+shallCaptureWsTest = do
+    let thePort = basePort + 10
+    withHive thePort theHive $ do
+        resp1 <-
+          WS.runClient "localhost" thePort "/give/tarzan/a/banana"
+            WS.receiveDataMessage
+        resp2 <-
+          WS.runClient "localhost" thePort "/give/cat/a/rat"
+            WS.receiveDataMessage
+
+        Text "tarzan banana" @=? resp1
+        Text "cat rat"       @=? resp2
+    where
+      theHive :: Hive ()
+      theHive =
+          webSocket </> "give" </:> "x" </> "a" </:> "y" ~~> do
+            acceptRequest $ do
+              catX <- capture "x"
+              catY <- capture "y"
+              sendTextMessage $ T.concat [ catX, " ", catY ]
 
 httpGet :: Int -> String -> IO (Int, Response LBS.ByteString)
 httpGet p url = do

@@ -27,6 +27,7 @@ testSuite =
         ]
     , testGroup "Hive WebSocket Tests"
         [ testCase "Test target routing" shallRouteWsTargetTest
+        , testCase "Test capturing" shallCaptureWsTest
         ]
     , testGroup "EndPoint Tests"
         [ testCase "Test get" getTest

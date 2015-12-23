@@ -6,6 +6,7 @@ module Network.Hive.ConnectedServer
     ( ConnectedServer
     , ConnectedServerContext (..)
     , DataMessage (..)
+    , WebSocketsData
     , runConnectedServer
     , receiveDataMessage
     , sendBinaryMessage
@@ -20,12 +21,13 @@ import Control.Monad.Reader ( ReaderT
                             , ask
                             , liftIO
                             )
-import Data.ByteString.Lazy (ByteString)
+import Network.Hive.CaptureMap (CaptureMap, CaptureBearer (..))
 import Network.Hive.Logger ( LoggerSet
                            , LogBearer (..)
                            )
 import Network.WebSockets ( Connection
                           , DataMessage (..)
+                          , WebSocketsData
                           )
 
 import qualified Network.WebSockets as WS
@@ -33,13 +35,18 @@ import qualified Network.WebSockets as WS
 -- | The runtime context for a connected server.
 data ConnectedServerContext
     = ConnectedServerContext
-        { loggerSet'  :: !LoggerSet
+        { captureMap' :: !CaptureMap
+        , loggerSet'  :: !LoggerSet
         , connection  :: !Connection
         }
 
 -- | LogBearer instance for the ConnectedServerContext.
 instance LogBearer ConnectedServerContext where
     getLoggerSet = loggerSet'
+
+-- | CaptureBearer instance for the ConnectedServerContext.
+instance CaptureBearer ConnectedServerContext where
+    getCaptureMap = captureMap'
 
 -- | The ConnectedServer monad.
 newtype ConnectedServer a
@@ -58,13 +65,13 @@ receiveDataMessage = do
     liftIO $ WS.receiveDataMessage conn
 
 -- | Send a binary message.
-sendBinaryMessage :: ByteString -> ConnectedServer ()
+sendBinaryMessage :: WebSocketsData a => a -> ConnectedServer ()
 sendBinaryMessage message = do
     conn <- connection <$> ask
     liftIO $ WS.sendBinaryData conn message
 
 -- | Send a text message.
-sendTextMessage :: ByteString -> ConnectedServer ()
+sendTextMessage :: WebSocketsData a => a -> ConnectedServer ()
 sendTextMessage message = do
     conn <- connection <$> ask
     liftIO $ WS.sendTextData conn message
