@@ -30,6 +30,7 @@ module Network.Hive
     , StatusCode (..)
     , HandlerResponse
     , bodyJSON
+    , bodyStream
     , redirectTo
     , respondWith
     , respondFile
@@ -99,6 +100,7 @@ import Network.Hive.Handler ( Handler
                             , runHandler
                             , defaultErrorHandler
                             , bodyJSON
+                            , bodyStream
                             , redirectTo
                             , respondWith
                             , respondFile

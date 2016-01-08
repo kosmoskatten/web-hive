@@ -35,6 +35,7 @@ library
                      , fast-logger
                      , mtl
                      , pipes
+                     , pipes-wai
                      , text
                      , time
                      , wai

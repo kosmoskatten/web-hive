@@ -11,6 +11,7 @@ module Network.Hive.Handler
     , runHandler
     , defaultErrorHandler
     , bodyJSON
+    , bodyStream
     , redirectTo
     , respondWith
     , respondFile
@@ -56,6 +57,9 @@ import Network.Wai ( Response
                    , responseFile
                    , responseLBS
                    )
+
+import Pipes (Producer)
+import Pipes.Wai (producerRequestBody)
 
 import qualified Data.ByteString.Char8 as BS
 import qualified Data.ByteString.Lazy.Char8 as LBS
@@ -115,6 +119,12 @@ bodyJSON = do
     req  <- request <$> ask
     body <- liftIO $ lazyRequestBody req
     return (fromJust $ decode body)
+
+-- | Get the body as a Pipes stream.
+bodyStream :: MonadIO m => Handler (Producer ByteString m ())
+bodyStream = do
+    req <- request <$> ask
+    return $ producerRequestBody req
 
 -- | Redirect using HTTP response code 301 to the specified path.
 redirectTo :: ByteString -> Handler HandlerResponse
