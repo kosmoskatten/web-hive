@@ -47,7 +47,9 @@ import Network.HTTP.Types ( Status
                           , status200
                           , status201
                           , status301
+                          , status400
                           , status404
+                          , status409
                           , status500
                           )
 import Network.Wai ( Response
@@ -75,6 +77,8 @@ data StatusCode
     | Created
     | MovedPermanently
     | NotFound
+    | BadRequest
+    | Conflict
     deriving Show
 
 -- | The context data for a running Handler.
@@ -188,4 +192,6 @@ toStatus :: StatusCode -> Status
 toStatus Ok               = status200
 toStatus Created          = status201
 toStatus MovedPermanently = status301
+toStatus BadRequest       = status400
 toStatus NotFound         = status404
+toStatus Conflict         = status409
