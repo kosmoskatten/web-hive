@@ -10,10 +10,12 @@ module Network.Hive.Handler
     , HandlerResponse (..)
     , runHandler
     , defaultErrorHandler
+    , bodyByteString
     , bodyJSON
     , bodyStream
     , redirectTo
     , respondWith
+    , respondByteString
     , respondFile
     , respondJSON
     , respondText
@@ -55,6 +57,7 @@ import Network.HTTP.Types ( Status
 import Network.Wai ( Response
                    , Request (..)
                    , lazyRequestBody
+                   , strictRequestBody
                    , responseBuilder
                    , responseFile
                    , responseLBS
@@ -116,6 +119,13 @@ defaultErrorHandler excp = do
     logError str
     respondWith response
 
+-- | Get the body as a raw bytestring. The bytestring is lazy but will
+-- be read strictly from the request.
+bodyByteString :: Handler LBS.ByteString
+bodyByteString = do
+    req <- request <$> ask
+    liftIO $ strictRequestBody req
+
 -- | Get the body as a JSON object. Will throw exception if not possible
 -- to decode to the requested object.
 bodyJSON :: FromJSON a => Handler a
@@ -141,6 +151,16 @@ redirectTo to = do
 -- | Generic respond function. Encapsulate a Wai Response.
 respondWith :: Response -> Handler HandlerResponse
 respondWith = return . HandlerResponse
+
+-- | Respond with a lazy bytestring, using the given status code and the
+-- given content type, encoded as bytestring.
+respondByteString :: StatusCode -> ByteString -> LBS.ByteString
+                  -> Handler HandlerResponse
+respondByteString !sc !ct !body = do
+    let headers    = [(hContentType, ct)]
+        statusCode = toStatus sc
+        response   = responseLBS statusCode headers body
+    respondWith response
 
 -- | Respond with a specific file. Useful in case of re-routing the root
 -- endpoint to the application start file. The low level implementation of

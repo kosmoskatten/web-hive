@@ -29,10 +29,12 @@ module Network.Hive
     , Handler
     , StatusCode (..)
     , HandlerResponse
+    , bodyByteString
     , bodyJSON
     , bodyStream
     , redirectTo
     , respondWith
+    , respondByteString
     , respondFile
     , respondJSON
     , respondText
@@ -99,10 +101,12 @@ import Network.Hive.Handler ( Handler
                             , Context (..)
                             , runHandler
                             , defaultErrorHandler
+                            , bodyByteString
                             , bodyJSON
                             , bodyStream
                             , redirectTo
                             , respondWith
+                            , respondByteString
                             , respondFile
                             , respondJSON
                             , respondText
